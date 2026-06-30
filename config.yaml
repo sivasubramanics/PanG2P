@@ -1,0 +1,42 @@
+# Configuration file for PanGAT pipeline
+
+# Path to the genomes CSV file with genome name and path to the genome file
+genomes: "input/genomes.csv"
+
+# ==================
+# General parameters
+# ==================
+
+# max memory to use (in GB)
+max_mem: 8
+
+# threads to use
+threads: 6
+
+# ==========================================
+# 01.single copy region detection parameters
+# ==========================================
+# kmer size for single copy region detection
+kmer_size: 31
+
+# minimum kmer count for single copy region detection
+min_kmer_count: 2
+
+# minimum length of a single copy region
+min_length: 100
+
+# gap between single copy regions to be merged
+merge_gap: 50
+
+# ========================
+# 02.clustering parameters
+# ========================
+
+# [mmseqs] minimum sequence identity for clustering
+min_seq_id: 0.9
+
+# [mmseqs] minimum sequence coverage for clustering
+min_coverage: 0.8
+
+# [mmseqs] coverage mode for clustering
+coverage_mode: 1
