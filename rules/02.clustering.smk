@@ -37,8 +37,26 @@ rule mmseqs_clustering:
         r"""
             (
                 mmseqs cluster --threads {threads} {input[0]} {params.prefix} {input[1]} --min-seq-id {params.min_seq_id} -c {params.min_coverage} --cov-mode {params.coverage_mode}
-                mmseqs createtsv --threads {threads} {params.prefix} {params.prefix} {params.prefix} {output}
+                mmseqs createtsv --threads {threads} {input[0]} {input[0]} {params.prefix} {output}
             ) > {log} 2>&1
+        """
+
+rule get_cluster_representatives:
+    input:
+        clusters="work/02.clustering/clusters.tsv",
+        fai="work/01.single_copy/single_copy.fa.fai"
+    output:
+        members="work/02.clustering/pan_cluster_all_member.txt",
+        reps="work/02.clustering/pan_cluster_mmseq_rep.txt",
+        bed="work/02.clustering/pan_cluster_bed_rep.txt"
+    conda:
+        "envs/r.yaml"
+    shell:
+        r"""
+        Rscript scripts/cluster_representatives.R \
+            --clusters {input.clusters} \
+            --fai {input.fai} \
+            --outdir $(dirname {output.members})
         """
 
 rule clustering_complete:
