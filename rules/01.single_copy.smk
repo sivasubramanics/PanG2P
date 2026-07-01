@@ -3,7 +3,8 @@ def get_genome_file(wildcards):
 
 rule complete_single_copy:
     input:
-        "work/01.single_copy/single_copy.fa"
+        "work/01.single_copy/single_copy.fa",
+        "work/01.single_copy/single_copy.fa.fai"
     output:
         "work/01.single_copy/.done"
     shell:
@@ -23,7 +24,7 @@ rule genome_index:
     output:
         "work/01.single_copy/{genome_id}.fasta.fai"
     conda:
-        "../envs/single_copy.yaml"
+        ENV_DIR / "single_copy.yaml"
     log:
         "logs/01.single_copy/{genome_id}.fasta.fai.log"
     shell:
@@ -36,16 +37,16 @@ rule count_kmer:
     output:
         temp("work/01.single_copy/{genome_id}.kmerCount.txt")
     conda:
-        "../envs/single_copy.yaml"
+        ENV_DIR / "single_copy.yaml"
     log:
         "logs/01.single_copy/{genome_id}.kmercount.log"
     resources:
-        mem_mb = config["max_mem"] * 1024
+        memory = config["max_mem"]
     params:
         mincount=config["min_kmer_count"],
         kmer_size=config["kmer_size"]
     shell:
-        "kmercountexact.sh -Xmx{resources.mem_mb} mincount={params.mincount} in={input[0]} \
+        "kmercountexact.sh -Xmx{resources.memory}G mincount={params.mincount} in={input[0]} \
          out={output} k={params.kmer_size} 2> {log}"
 
 rule mask_genome:
@@ -58,13 +59,13 @@ rule mask_genome:
     params:
         kmer_size = config["kmer_size"]
     resources:
-        mem_mb = config["max_mem"] * 1024
+        memory = config["max_mem"]
     log:
         "logs/01.single_copy/{genome_id}.masked.bbduk.log"
     conda:
-        "../envs/single_copy.yaml"
+        ENV_DIR / "single_copy.yaml"
     shell:
-        "bbduk.sh kmask='N' k={params.kmer_size} -Xmx{resources.mem_mb} in={input[0]} ref={input[1]} \
+        "bbduk.sh kmask='N' k={params.kmer_size} -Xmx{resources.memory}G in={input[0]} ref={input[1]} \
          out={output[0]} > {output[1]} 2> {log}"
 
 rule index_masked_genome:
@@ -73,7 +74,7 @@ rule index_masked_genome:
     output:
         temp("work/01.single_copy/{genome_id}.masked.fa.fai")
     conda:
-        "../envs/single_copy.yaml"
+        ENV_DIR / "single_copy.yaml"
     log:
         "logs/01.single_copy/{genome_id}.masked.fa.fai.log"
     shell:
@@ -89,7 +90,7 @@ rule extract_unmasked_regions:
         gaps_bed=temp("work/01.single_copy/{genome_id}.masked_gaps.bed"),
         genome_tmp=temp("work/01.single_copy/{genome_id}.masked.genome.tmp"),
     conda:
-        "../envs/single_copy.yaml"
+        ENV_DIR / "single_copy.yaml"
     log:
         "logs/01.single_copy/{genome_id}.unmasked.log"
     shell:
@@ -123,7 +124,7 @@ rule extract_single_copy_regions:
         minlen=config["min_length"],
         mergegap=config["merge_gap"],
     conda:
-        "../envs/single_copy.yaml"
+        ENV_DIR / "single_copy.yaml"
     log:
         "logs/01.single_copy/{genome_id}.single_copy.log"
     shell:
@@ -144,4 +145,16 @@ rule concat_single_copy_regions:
     shell:
         r"""
         cat {input} > {output}
+        """
+
+rule index_single_copy_fasta:
+    input:
+        "work/01.single_copy/single_copy.fa"
+    output:
+        "work/01.single_copy/single_copy.fa.fai"
+    conda:
+        ENV_DIR / "single_copy.yaml"
+    shell:
+        r"""
+        samtools faidx {input}
         """

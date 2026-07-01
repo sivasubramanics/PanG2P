@@ -15,17 +15,20 @@ option_list <- list(
   make_option(
     c("-c", "--clusters"),
     type = "character",
-    help = "MMseqs cluster TSV"
+    help = "MMseqs cluster TSV",
+    required = TRUE
   ),
   make_option(
     c("-f", "--fai"),
     type = "character",
-    help = "FASTA index (.fai)"
+    help = "FASTA index (.fai)",
+    required = TRUE
   ),
   make_option(
     c("-o", "--outdir"),
     type = "character",
-    help = "Output directory"
+    help = "Output directory",
+    required = TRUE
   )
 )
 

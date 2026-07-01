@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - samtools
+  - bbmap==39.13
+  - bedtools
+  - ucsc-fatotwobit
+  - ucsc-twobitinfo
+  - python

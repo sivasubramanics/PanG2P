@@ -5,7 +5,7 @@ rule mmseqs_createdb:
         "work/02.clustering/single_copy.db",
         temp(directory("work/02.clustering/tmp"))
     conda:
-        "../envs/clustering.yaml"
+        ENV_DIR / "clustering.yaml"
     threads: config["threads"]
     log:
         "logs/02.clustering/single_copy.createdb.log"
@@ -24,7 +24,7 @@ rule mmseqs_clustering:
     output:
         "work/02.clustering/clusters.tsv"
     conda:
-        "../envs/clustering.yaml"
+        ENV_DIR / "clustering.yaml"
     params:
         prefix = "work/02.clustering/clusters",
         min_seq_id = config["min_seq_id"],
@@ -36,6 +36,7 @@ rule mmseqs_clustering:
     shell:
         r"""
             (
+                rm -rf {input[1]} {params.prefix}.*
                 mmseqs cluster --threads {threads} {input[0]} {params.prefix} {input[1]} --min-seq-id {params.min_seq_id} -c {params.min_coverage} --cov-mode {params.coverage_mode}
                 mmseqs createtsv --threads {threads} {input[0]} {input[0]} {params.prefix} {output}
             ) > {log} 2>&1
@@ -50,10 +51,12 @@ rule get_cluster_representatives:
         reps="work/02.clustering/pan_cluster_mmseq_rep.txt",
         bed="work/02.clustering/pan_cluster_bed_rep.txt"
     conda:
-        "envs/r.yaml"
+        ENV_DIR / "r.yaml"
+    params:
+        script=SCRIPT_DIR / "cluster_representatives.R"
     shell:
         r"""
-        Rscript scripts/cluster_representatives.R \
+        Rscript {params.script} \
             --clusters {input.clusters} \
             --fai {input.fai} \
             --outdir $(dirname {output.members})
@@ -61,7 +64,9 @@ rule get_cluster_representatives:
 
 rule clustering_complete:
     input:
-        "work/02.clustering/clusters.tsv"
+        members="work/02.clustering/pan_cluster_all_member.txt",
+        reps="work/02.clustering/pan_cluster_mmseq_rep.txt",
+        bed="work/02.clustering/pan_cluster_bed_rep.txt"
     output:
         "work/02.clustering/.done"
     shell:

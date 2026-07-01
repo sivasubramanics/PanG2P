@@ -3,7 +3,7 @@ channels:
   - bioconda
 dependencies:
   - samtools
-  - bbmap
+  - bbmap==39.13
   - bedtools
   - ucsc-fatotwobit
   - ucsc-twobitinfo
