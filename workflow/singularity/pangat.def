@@ -7,6 +7,9 @@ From: mambaorg/micromamba:1.5.10
 %post
     set -e
 
+    ls -lah /tmp
+    find / -name environment.yaml
+
     # create environment
     micromamba create -y -n pangat -f /tmp/environment.yaml
 
