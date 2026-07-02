@@ -1,0 +1,44 @@
+name: Build and Push Singularity Container
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "workflow/singularity/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Apptainer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apptainer
+
+      - name: Compute content hash
+        run: |
+          FILES="workflow/singularity/pangat.def workflow/singularity/environment.yaml"
+
+          HASH=$(sha256sum $FILES | sort | sha256sum | cut -c1-12)
+
+          echo "IMAGE_TAG=$HASH" >> $GITHUB_ENV
+
+      - name: Build container
+        run: |
+          apptainer build pangat.sif workflow/singularity/pangat.def
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | apptainer registry login -u ${{ github.actor }} --password-stdin oras://ghcr.io
+
+      - name: Push versioned image
+        run: |
+          apptainer push pangat.sif oras://ghcr.io/${{ github.repository_owner }}/pangat:${IMAGE_TAG}

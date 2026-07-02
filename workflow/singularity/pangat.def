@@ -1,0 +1,21 @@
+Bootstrap: docker
+From: mambaorg/micromamba:1.5.10
+
+%files
+    environment.yaml /tmp/environment.yaml
+
+%post
+    set -e
+
+    # create environment
+    micromamba create -y -n pangat -f /tmp/environment.yaml
+
+    # clean up to reduce image size
+    micromamba clean -a -y
+
+    # sanity checks
+    /opt/conda/envs/pangat/bin/python --version
+    /opt/conda/envs/pangat/bin/mmseqs version
+
+%environment
+    export PATH=/opt/conda/envs/pangat/bin:$PATH

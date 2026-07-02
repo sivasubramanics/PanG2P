@@ -13,6 +13,9 @@ max_mem: 4
 # threads to use
 threads: 2
 
+# container image to use
+image: "ghcr.io/sivasubramanics/pangat:latest"
+
 # ==========================================
 # 01.single copy region detection parameters
 # ==========================================

@@ -1,0 +1,16 @@
+name: pangat
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - bbmap=39.13
+  - bedtools=2.31.1
+  - mmseqs2=18.8cc5c
+  - r-base=4.3
+  - r-data.table
+  - r-igraph
+  - r-optparse
+  - samtools=1.23.1
+  - ucsc-fatotwobit=482
+  - ucsc-twobitinfo=482

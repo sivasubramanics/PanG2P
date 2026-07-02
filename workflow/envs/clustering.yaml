@@ -2,4 +2,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - mmseqs2
+  - mmseqs2==18.8cc5c
