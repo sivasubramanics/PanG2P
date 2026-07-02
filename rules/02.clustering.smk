@@ -20,7 +20,7 @@ rule mmseqs_createdb:
 rule mmseqs_clustering:
     input:
         "work/02.clustering/single_copy.db",
-        directory("work/02.clustering/tmp")
+        "work/02.clustering/tmp"
     output:
         "work/02.clustering/clusters.tsv"
     conda:
