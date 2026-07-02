@@ -6,6 +6,8 @@ rule mmseqs_createdb:
         temp(directory("work/02.clustering/tmp"))
     conda:
         ENV_DIR / "clustering.yaml"
+    container:
+        CONTAINER
     threads: config["threads"]
     log:
         "logs/02.clustering/mmseqs_createdb.log"
@@ -27,6 +29,8 @@ rule mmseqs_clustering:
         "work/02.clustering/clusters.tsv"
     conda:
         ENV_DIR / "clustering.yaml"
+    container:
+        CONTAINER
     params:
         prefix = "work/02.clustering/clusters",
         min_seq_id = config["min_seq_id"],
@@ -56,6 +60,8 @@ rule get_cluster_representatives:
         bed="work/02.clustering/pan_cluster_bed_rep.txt"
     conda:
         ENV_DIR / "r.yaml"
+    container:
+        CONTAINER
     params:
         script=SCRIPT_DIR / "cluster_representatives.R"
     log:

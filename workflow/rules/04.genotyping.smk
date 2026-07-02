@@ -23,6 +23,8 @@ rule bbduk_kmer_search:
         "work/04.genotyping/{sample}/bbduk.tsv"
     conda:
         ENV_DIR / "genotyping.yaml"
+    container:
+        CONTAINER
     log:
         "logs/04.genotyping/bbduk_kmer_search/{sample}.log"
     params:

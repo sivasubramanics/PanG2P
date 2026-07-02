@@ -33,6 +33,8 @@ rule genome_index:
         "work/01.single_copy/{genome_id}.fasta.fai"
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     log:
         "logs/01.single_copy/genome_index/{genome_id}.log"
     benchmark:
@@ -48,6 +50,8 @@ rule count_kmer:
         temp("work/01.single_copy/{genome_id}.kmerCount.txt")
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     log:
         "logs/01.single_copy/count_kmer/{genome_id}.log"
     resources:
@@ -76,6 +80,8 @@ rule mask_genome:
         "logs/01.single_copy/mask_genome/{genome_id}.log"
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     benchmark:
         "benchmarks/01.single_copy/mask_genome/{genome_id}.tsv"
     shell:
@@ -89,6 +95,8 @@ rule index_masked_genome:
         temp("work/01.single_copy/{genome_id}.masked.fa.fai")
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     log:
         "logs/01.single_copy/index_masked_genome/{genome_id}.log"
     benchmark:
@@ -107,6 +115,8 @@ rule extract_unmasked_regions:
         genome_tmp=temp("work/01.single_copy/{genome_id}.masked.genome.tmp"),
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     log:
         "logs/01.single_copy/extract_unmasked_regions/{genome_id}.log"
     benchmark:
@@ -143,6 +153,8 @@ rule extract_single_copy_regions:
         mergegap=config["merge_gap"],
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     log:
         "logs/01.single_copy/extract_single_copy_regions/{genome_id}.log"
     benchmark:
@@ -178,6 +190,8 @@ rule index_single_copy_fasta:
         "work/01.single_copy/single_copy.fa.fai"
     conda:
         ENV_DIR / "single_copy.yaml"
+    container:
+        CONTAINER
     log:
         "logs/01.single_copy/index_single_copy_fasta.log"
     benchmark:

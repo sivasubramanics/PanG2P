@@ -28,6 +28,8 @@ rule make_intervals:
         "work/03.pankmers/{genome}_interval_formatted.bed"
     conda:
         ENV_DIR / "pankmers.yaml"
+    container:
+        CONTAINER
     params:
         script=SCRIPT_DIR / "reformat_kmer.py",
         kmer_size=config["pan_kmer_size"],
@@ -58,6 +60,8 @@ rule extract_kmers:
         "work/03.pankmers/{genome}_sc_kmer.fasta"
     conda:
         ENV_DIR / "pankmers.yaml"
+    container:
+        CONTAINER
     log:
         "logs/03.pankmers/extract_kmers/{genome}.log"
     benchmark:

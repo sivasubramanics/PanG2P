@@ -14,7 +14,8 @@ max_mem: 4
 threads: 2
 
 # container image to use
-image: "ghcr.io/sivasubramanics/pangat:latest"
+# if the env doens't have internet access, pull the below image and use it locally as e.g., :pangat.sif
+container: "oras://ghcr.io/sivasubramanics/pangat:f58cfca10bda"
 
 # ==========================================
 # 01.single copy region detection parameters

@@ -3,12 +3,14 @@ import pandas as pd
 from os import path
 from pathlib import Path
 
+
+configfile: "config.yaml"
+
 BASEDIR = Path(workflow.basedir)
 SCRIPT_DIR = BASEDIR / "workflow" / "scripts"
 ENV_DIR = BASEDIR / "workflow" / "envs"
 RULES_DIR = BASEDIR / "workflow" / "rules"
-
-configfile: "config.yaml"
+CONTAINER = config["container"]
 
 genome_df = pd.read_csv(config["genomes"], sep=',').set_index("id").sort_index()
 genome_map = genome_df["path"].to_dict()
