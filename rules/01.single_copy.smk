@@ -7,6 +7,10 @@ rule complete_single_copy:
         "work/01.single_copy/single_copy.fa.fai"
     output:
         "work/01.single_copy/.done"
+    log:
+        "logs/01.single_copy/complete_single_copy.log"
+    benchmark:
+        "benchmarks/01.single_copy/complete_single_copy.tsv"
     shell:
         "touch {output}"
 
@@ -15,6 +19,10 @@ rule copy_genome:
         get_genome_file
     output:
         "work/01.single_copy/{genome_id}.fasta"
+    log:
+        "logs/01.single_copy/copy_genome/{genome_id}.log"
+    benchmark:
+        "benchmarks/01.single_copy/copy_genome/{genome_id}.tsv"
     shell:
         "cp {input} {output}"
 
@@ -26,7 +34,9 @@ rule genome_index:
     conda:
         ENV_DIR / "single_copy.yaml"
     log:
-        "logs/01.single_copy/{genome_id}.fasta.fai.log"
+        "logs/01.single_copy/genome_index/{genome_id}.log"
+    benchmark:
+        "benchmarks/01.single_copy/genome_index/{genome_id}.tsv"
     shell:
         "samtools faidx {input}"
 
@@ -39,12 +49,14 @@ rule count_kmer:
     conda:
         ENV_DIR / "single_copy.yaml"
     log:
-        "logs/01.single_copy/{genome_id}.kmercount.log"
+        "logs/01.single_copy/count_kmer/{genome_id}.log"
     resources:
         memory = config["max_mem"]
     params:
         mincount=config["min_kmer_count"],
         kmer_size=config["kmer_size"]
+    benchmark:
+        "benchmarks/01.single_copy/count_kmer/{genome_id}.tsv"
     shell:
         "kmercountexact.sh -Xmx{resources.memory}G mincount={params.mincount} in={input[0]} \
          out={output} k={params.kmer_size} 2> {log}"
@@ -61,9 +73,11 @@ rule mask_genome:
     resources:
         memory = config["max_mem"]
     log:
-        "logs/01.single_copy/{genome_id}.masked.bbduk.log"
+        "logs/01.single_copy/mask_genome/{genome_id}.log"
     conda:
         ENV_DIR / "single_copy.yaml"
+    benchmark:
+        "benchmarks/01.single_copy/mask_genome/{genome_id}.tsv"
     shell:
         "bbduk.sh kmask='N' k={params.kmer_size} -Xmx{resources.memory}G in={input[0]} ref={input[1]} \
          out={output[0]} > {output[1]} 2> {log}"
@@ -76,7 +90,9 @@ rule index_masked_genome:
     conda:
         ENV_DIR / "single_copy.yaml"
     log:
-        "logs/01.single_copy/{genome_id}.masked.fa.fai.log"
+        "logs/01.single_copy/index_masked_genome/{genome_id}.log"
+    benchmark:
+        "benchmarks/01.single_copy/index_masked_genome/{genome_id}.tsv"
     shell:
         "samtools faidx {input}"
 
@@ -92,7 +108,9 @@ rule extract_unmasked_regions:
     conda:
         ENV_DIR / "single_copy.yaml"
     log:
-        "logs/01.single_copy/{genome_id}.unmasked.log"
+        "logs/01.single_copy/extract_unmasked_regions/{genome_id}.log"
+    benchmark:
+        "benchmarks/01.single_copy/extract_unmasked_regions/{genome_id}.tsv"
     shell:
         r"""
             (
@@ -126,7 +144,9 @@ rule extract_single_copy_regions:
     conda:
         ENV_DIR / "single_copy.yaml"
     log:
-        "logs/01.single_copy/{genome_id}.single_copy.log"
+        "logs/01.single_copy/extract_single_copy_regions/{genome_id}.log"
+    benchmark:
+        "benchmarks/01.single_copy/extract_single_copy_regions/{genome_id}.tsv"
     shell:
         r"""
             (
@@ -142,6 +162,10 @@ rule concat_single_copy_regions:
         expand("work/01.single_copy/{genome_id}.single_copy.fa", genome_id=genome_df.index)
     output:
         "work/01.single_copy/single_copy.fa"
+    log:
+        "logs/01.single_copy/concat_single_copy_regions.log"
+    benchmark:
+        "benchmarks/01.single_copy/concat_single_copy_regions.tsv"
     shell:
         r"""
         cat {input} > {output}
@@ -154,6 +178,10 @@ rule index_single_copy_fasta:
         "work/01.single_copy/single_copy.fa.fai"
     conda:
         ENV_DIR / "single_copy.yaml"
+    log:
+        "logs/01.single_copy/index_single_copy_fasta.log"
+    benchmark:
+        "benchmarks/01.single_copy/index_single_copy_fasta.tsv"
     shell:
         r"""
         samtools faidx {input}

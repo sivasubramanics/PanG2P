@@ -8,7 +8,9 @@ rule mmseqs_createdb:
         ENV_DIR / "clustering.yaml"
     threads: config["threads"]
     log:
-        "logs/02.clustering/single_copy.createdb.log"
+        "logs/02.clustering/mmseqs_createdb.log"
+    benchmark:
+        "benchmarks/02.clustering/mmseqs_createdb.tsv"
     shell:
         r"""
             (
@@ -32,7 +34,9 @@ rule mmseqs_clustering:
         coverage_mode = config["coverage_mode"]
     threads: config["threads"]
     log:
-        "logs/02.clustering/clusters.log"
+        "logs/02.clustering/mmseqs_clustering.log"
+    benchmark:
+        "benchmarks/02.clustering/mmseqs_clustering.tsv"
     shell:
         r"""
             (
@@ -54,6 +58,10 @@ rule get_cluster_representatives:
         ENV_DIR / "r.yaml"
     params:
         script=SCRIPT_DIR / "cluster_representatives.R"
+    log:
+        "logs/02.clustering/get_cluster_representatives.log"
+    benchmark:
+        "benchmarks/02.clustering/get_cluster_representatives.tsv"
     shell:
         r"""
         Rscript {params.script} \
@@ -69,5 +77,9 @@ rule clustering_complete:
         bed="work/02.clustering/pan_cluster_bed_rep.txt"
     output:
         "work/02.clustering/.done"
+    log:
+        "logs/02.clustering/clustering_complete.log"
+    benchmark:
+        "benchmarks/02.clustering/clustering_complete.tsv"
     shell:
         "touch {output}"

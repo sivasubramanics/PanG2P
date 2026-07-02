@@ -11,7 +11,7 @@ genomes: "input/genomes.csv"
 max_mem: 4
 
 # threads to use
-threads: 6
+threads: 2
 
 # ==========================================
 # 01.single copy region detection parameters

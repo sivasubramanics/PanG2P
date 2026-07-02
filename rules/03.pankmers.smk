@@ -6,6 +6,10 @@ rule split_and_sort_pan_clusters:
         "work/02.clustering/pan_cluster_bed_rep.txt"
     output:
         "work/03.pankmers/{genome}.tsv"
+    log:
+        "logs/03.pankmers/split_and_sort_pan_clusters/{genome}.log"
+    benchmark:
+        "benchmarks/03.pankmers/split_and_sort_pan_clusters/{genome}.tsv"
     shell:
         r"""
         mkdir -p $(dirname {output})
@@ -28,6 +32,10 @@ rule make_intervals:
         script=SCRIPT_DIR / "reformat_kmer.py",
         kmer_size=config["pan_kmer_size"],
         step_size=config["pan_kmer_step"]
+    log:
+        "logs/03.pankmers/make_intervals/{genome}.log"
+    benchmark:
+        "benchmarks/03.pankmers/make_intervals/{genome}.tsv"
     shell:
         r"""
         tmp=$(mktemp)
@@ -50,6 +58,10 @@ rule extract_kmers:
         "work/03.pankmers/{genome}_sc_kmer.fasta"
     conda:
         ENV_DIR / "pankmers.yaml"
+    log:
+        "logs/03.pankmers/extract_kmers/{genome}.log"
+    benchmark:
+        "benchmarks/03.pankmers/extract_kmers/{genome}.tsv"
     shell:
         r"""
         cut -f1-4 {input.bed} \
@@ -68,6 +80,10 @@ rule combine_kmers:
         )
     output:
         "work/03.pankmers/Pan_kmers.fasta"
+    log:
+        "logs/03.pankmers/combine_kmers.log"
+    benchmark:
+        "benchmarks/03.pankmers/combine_kmers.tsv"
     shell:
         """
         cat {input} > {output}
@@ -78,6 +94,10 @@ rule count_kmers:
         "work/03.pankmers/Pan_kmers.fasta"
     output:
         "work/03.pankmers/Pan_count_kmers.tsv"
+    log:
+        "logs/03.pankmers/count_kmers.log"
+    benchmark:
+        "benchmarks/03.pankmers/count_kmers.tsv"
     shell:
         r"""
         awk '
@@ -104,6 +124,10 @@ rule complete_pankmers:
         "work/03.pankmers/Pan_count_kmers.tsv"
     output:
         "work/03.pankmers/.done"
+    log:
+        "logs/03.pankmers/complete_pankmers.log"
+    benchmark:
+        "benchmarks/03.pankmers/complete_pankmers.tsv"
     shell:
         r"""
         touch {output}

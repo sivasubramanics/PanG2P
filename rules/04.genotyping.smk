@@ -24,10 +24,12 @@ rule bbduk_kmer_search:
     conda:
         ENV_DIR / "genotyping.yaml"
     log:
-        "logs/04.genotyping/{sample}.bbduk.log"
+        "logs/04.genotyping/bbduk_kmer_search/{sample}.log"
     params:
         kmer_size = config["pan_kmer_size"],
         memory = config["max_mem"]
+    benchmark:
+        "benchmarks/04.genotyping/bbduk_kmer_search/{sample}.tsv"
     shell:
         r"""
             (
@@ -53,6 +55,10 @@ rule summarize_kmer_counts:
         "work/04.genotyping/{sample}/bbduk.tsv"
     output:
         "work/04.genotyping/{sample}/count.tsv.gz"
+    log:
+        "logs/04.genotyping/summarize_kmer_counts/{sample}.log"
+    benchmark:
+        "benchmarks/04.genotyping/summarize_kmer_counts/{sample}.tsv"
     shell:
         r"""
         awk '
@@ -89,5 +95,9 @@ rule genotyping_complete:
         )
     output:
         "work/04.genotyping/.done"
+    log:
+        "logs/04.genotyping/genotyping_complete.log"
+    benchmark:
+        "benchmarks/04.genotyping/genotyping_complete.tsv"
     shell:
         "touch {output}"
