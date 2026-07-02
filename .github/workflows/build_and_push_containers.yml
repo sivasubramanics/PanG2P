@@ -31,7 +31,8 @@ jobs:
 
       - name: Build container
         run: |
-          apptainer build pangat.sif workflow/singularity/pangat.def
+          cd workflow/singularity
+          apptainer build ../../pangat.sif pangat.def
 
       - name: Login to GHCR
         run: |
