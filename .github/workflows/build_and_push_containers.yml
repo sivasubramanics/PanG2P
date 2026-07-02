@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "workflow/singularity/**"
+      - ".github/workflows/build_and_push_containers.yml"
 
 jobs:
   build:
