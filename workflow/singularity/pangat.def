@@ -2,16 +2,13 @@ Bootstrap: docker
 From: mambaorg/micromamba:1.5.10
 
 %files
-    environment.yaml /tmp/environment.yaml
+    environment.yaml /opt/environment.yaml
 
 %post
     set -e
 
-    ls -lah /tmp
-    find / -name environment.yaml
-
     # create environment
-    micromamba create -y -n pangat -f /tmp/environment.yaml
+    micromamba create -y -n pangat -f /opt/environment.yaml
 
     # clean up to reduce image size
     micromamba clean -a -y
