@@ -35,17 +35,57 @@
 options(datatable.print.class = FALSE)
 options(scipen = 999)
 
-library(data.table)
-library(parallel)
+suppressPackageStartupMessages({
+  library(optparse)
+  library(data.table)
+  library(parallel)
+})
+
+options(
+  datatable.print.class = FALSE,
+  scipen = 20
+)
+
+option_list <- list(
+  make_option(
+    c("-i", "--indir"),
+    type = "character",
+    help = "Directory with count.tsv.gz files (one per accession)"
+  ),
+  make_option(
+    c("-p", "--pancounts"),
+    type = "character",
+    help = "File with pan kmers and their total counts (Pan_count_kmers.tsv)"
+  ),
+  make_option(
+    c("-o", "--outdir"),
+    type = "character",
+    help = "Output directory for wide TSV files"
+  ),
+  make_option(
+    c("-c", "--cores"),
+    type = "integer",
+    default = 4,
+    help = "Number of parallel workers (default: 4)"
+  )
+)
+
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# if all three options are not given, print usage and exit
+if (is.null(opt$indir) && is.null(opt$outdir) && is.null(opt$pancounts)) {
+  print_help(OptionParser(option_list = option_list))
+  quit()
+}
 
 # =============================================================================
 # CONFIG — edit these paths before running
 # =============================================================================
 
-PAN_KMER_FILE  <- "/Users/selva001/projects/work/tamu/pangat/pangat/work/03.pankmers/Pan_count_kmers.tsv"
-GENOTYPING_DIR <- "/Users/selva001/projects/work/tamu/pangat/pangat/work/04.genotyping"
-OUTPUT_DIR     <- "."          # directory where output TSVs will be written
-CORES          <- 20           # parallel workers; reduce if memory is tight
+PAN_KMER_FILE  <- opt$pancounts  # path to Pan_count_kmers.tsv
+GENOTYPING_DIR <- opt$indir      # path to 04.genotyping/ directory
+OUTPUT_DIR     <- opt$outdir      # path to output directory for wide TSVs
+CORES          <- opt$cores      # number of parallel workers
 
 # =============================================================================
 # STEP 1A: Load pan-genome variant reference
@@ -137,14 +177,14 @@ cat("Casting to wide format...\n")
 
 # --- mapped_kmers table ---
 wide_mapped <- dcast(long_data, v.id ~ accession, value.var = "mapped_kmers")
-out_mapped  <- file.path(OUTPUT_DIR, "wide_mapped_kmers.tsv")
+out_mapped  <- file.path(OUTPUT_DIR, "overall_mapped_kmers.tsv.gz")
 fwrite(wide_mapped, file = out_mapped, sep = "\t", quote = FALSE)
 cat("  Written:", out_mapped,
     "(", nrow(wide_mapped), "variants x", ncol(wide_mapped) - 1, "accessions )\n")
 
 # --- count table ---
 wide_count <- dcast(long_data, v.id ~ accession, value.var = "count")
-out_count  <- file.path(OUTPUT_DIR, "wide_count.tsv")
+out_count  <- file.path(OUTPUT_DIR, "overall_counts.tsv.gz")
 fwrite(wide_count, file = out_count, sep = "\t", quote = FALSE)
 cat("  Written:", out_count,
     "(", nrow(wide_count), "variants x", ncol(wide_count) - 1, "accessions )\n")

@@ -20,7 +20,7 @@ rule bbduk_kmer_search:
         ref="work/03.pankmers/Pan_kmers.fasta",
         query=get_fq_dir
     output:
-        "work/04.genotyping/{sample}/bbduk.tsv"
+        temp("work/04.genotyping/{sample}/bbduk.tsv")
     conda:
         ENV_DIR / "genotyping.yaml"
     container:
@@ -89,12 +89,62 @@ rule summarize_kmer_counts:
         | gzip > {output}
         """
 
-rule genotyping_complete:
+rule collect_kmer_counts:
     input:
         expand(
             "work/04.genotyping/{sample}/count.tsv.gz",
             sample=SAMPLES.keys()
         )
+    output:
+        "work/04.genotyping/overall_counts.tsv.gz",
+        "work/04.genotyping/overall_mapped_kmers.tsv.gz"
+    params:
+        script = SCRIPTS_DIR / "collect_kmer_counts.R",
+        input_dir = "work/04.genotyping/",
+        output_dir = "work/04.genotyping/",
+    threads:
+        config["threads"]
+    conda:
+        "envs/04.genotyping.yaml"
+    container:
+        CONTAINER
+    log:
+        "logs/04.genotyping/collect_kmer_counts.log"
+    benchmark:
+        "benchmarks/04.genotyping/collect_kmer_counts.tsv"
+    shell:
+        r"""
+        Rscript {params.script} -i {params.input_dir} -o {params.output_dir} -c {threads} > {log} 2>&1
+        """
+
+rule normalize_kmer_counts:
+    input:
+        overall = "work/04.genotyping/overall_counts.tsv.gz",
+        mapped = "work/04.genotyping/overall_mapped_kmers.tsv.gz"
+    output:
+        "work/04.genotyping/genotype_matrix.tsv.gz",
+        "work/04.genotyping/genotype_map.tsv.gz"
+    params:
+        script = SCRIPTS_DIR / "normalize_kmer_counts.R",
+        input_dir = "work/04.genotyping/",
+        output_dir = "work/04.genotyping/"
+    conda:
+        "envs/04.genotyping.yaml"
+    container:
+        CONTAINER
+    log:
+        "logs/04.genotyping/normalize_kmer_counts.log"
+    benchmark:
+        "benchmarks/04.genotyping/normalize_kmer_counts.tsv"
+    shell:
+        r"""
+        Rscript {params.script} --cm {input.mapped} --oc {input.overall} --outdir {params.output_dir} > {log} 2>&1
+        """
+
+rule genotyping_complete:
+    input:
+        "work/04.genotyping/genotype_matrix.tsv.gz",
+        "work/04.genotyping/genotype_map.tsv.gz"
     output:
         "work/04.genotyping/.done"
     log:
