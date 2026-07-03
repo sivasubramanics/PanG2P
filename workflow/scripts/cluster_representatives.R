@@ -15,24 +15,27 @@ option_list <- list(
   make_option(
     c("-c", "--clusters"),
     type = "character",
-    help = "MMseqs cluster TSV",
-    required = TRUE
+    help = "MMseqs cluster TSV"
   ),
   make_option(
     c("-f", "--fai"),
     type = "character",
-    help = "FASTA index (.fai)",
-    required = TRUE
+    help = "FASTA index (.fai)"
   ),
   make_option(
     c("-o", "--outdir"),
     type = "character",
-    help = "Output directory",
-    required = TRUE
+    help = "Output directory"
   )
 )
 
 opt <- parse_args(OptionParser(option_list = option_list))
+
+# if all three options are not given, print usage and exit
+if (is.null(opt$clusters) && is.null(opt$fai) && is.null(opt$outdir)) {
+  print_help(OptionParser(option_list = option_list))
+  quit()
+}
 
 dir.create(opt$outdir, recursive = TRUE, showWarnings = FALSE)
 
