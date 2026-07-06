@@ -91,11 +91,11 @@ rule summarize_kmer_counts:
 
 rule collect_kmer_counts:
     input:
-        expand(
+        count_files = expand(
             "work/04.genotyping/{sample}/count.tsv.gz",
             sample=SAMPLES.keys()
         ),
-        "work/03.pankmers/Pan_count_kmers.tsv"
+        pan_kmer_counts = "work/03.pankmers/Pan_count_kmers.tsv"
     output:
         "work/04.genotyping/overall_counts.tsv.gz",
         "work/04.genotyping/overall_mapped_kmers.tsv.gz"
@@ -115,7 +115,7 @@ rule collect_kmer_counts:
         "benchmarks/04.genotyping/collect_kmer_counts.tsv"
     shell:
         r"""
-        Rscript {params.script} -i {params.input_dir} -p {input[1]} -o {params.output_dir} -c {threads} > {log} 2>&1
+        Rscript {params.script} -i {params.input_dir} -p {input[pan_kmer_counts]} -o {params.output_dir} -c {threads} > {log} 2>&1
         """
 
 rule normalize_kmer_counts:
