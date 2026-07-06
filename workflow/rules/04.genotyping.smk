@@ -105,7 +105,7 @@ rule collect_kmer_counts:
     threads:
         config["threads"]
     conda:
-        "envs/04.genotyping.yaml"
+        ENV_DIR / "genotyping.yaml"
     container:
         CONTAINER
     log:
@@ -129,7 +129,7 @@ rule normalize_kmer_counts:
         input_dir = "work/04.genotyping/",
         output_dir = "work/04.genotyping/"
     conda:
-        "envs/04.genotyping.yaml"
+        ENV_DIR / "genotyping.yaml"
     container:
         CONTAINER
     log:
