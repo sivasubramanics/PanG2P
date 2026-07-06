@@ -7,7 +7,7 @@ from pathlib import Path
 configfile: "config.yaml"
 
 BASEDIR = Path(workflow.basedir)
-SCRIPT_DIR = BASEDIR / "workflow" / "scripts"
+SCRIPTS_DIR = BASEDIR / "workflow" / "scripts"
 ENV_DIR = BASEDIR / "workflow" / "envs"
 RULES_DIR = BASEDIR / "workflow" / "rules"
 CONTAINER = config["container"]
