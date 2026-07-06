@@ -139,7 +139,7 @@ rule normalize_kmer_counts:
         "benchmarks/04.genotyping/normalize_kmer_counts.tsv"
     shell:
         r"""
-        Rscript {params.script} --cm {input.mapped} --oc {input.overall} --outdir {params.output_dir} > {log} 2>&1
+        Rscript {params.script} --cm {input.mapped} --co {input.overall} --outdir {params.output_dir} > {log} 2>&1
         """
 
 rule genotyping_complete:
