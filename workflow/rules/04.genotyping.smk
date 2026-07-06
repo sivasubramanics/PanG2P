@@ -37,8 +37,8 @@ rule bbduk_kmer_search:
             (
                 mkdir -p $(dirname {output})
 
-                find {input.query} | egrep 'fq.gz$|fastq.gz$|R1.fastq.gz$' \
-                | xargs gzip -cd \
+                find {input.query} | egrep 'fq.gz$|fastq.gz$' \
+                | xargs gzip -ckd \
                 | bbduk.sh \
                     -Xmx{params.memory}G \
                     -k={params.kmer_size} \
