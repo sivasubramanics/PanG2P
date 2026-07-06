@@ -19,7 +19,7 @@ PanGAT builds a reference catalogue of single-copy, haplotype-specific *k*-mers 
 
 ## Installation
 
-PanGAT requires [Snakemake](https://snakemake.readthedocs.io/) and [Conda](https://docs.conda.io/).
+PanGAT requires [Snakemake](https://snakemake.readthedocs.io/) >=8.0
 
 ```bash
 # Create and activate a dedicated environment
