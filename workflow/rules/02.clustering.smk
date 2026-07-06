@@ -63,7 +63,7 @@ rule get_cluster_representatives:
     container:
         CONTAINER
     params:
-        script=SCRIPT_DIR / "cluster_representatives.R"
+        script=SCRIPTS_DIR / "cluster_representatives.R",
     log:
         "logs/02.clustering/get_cluster_representatives.log"
     benchmark:

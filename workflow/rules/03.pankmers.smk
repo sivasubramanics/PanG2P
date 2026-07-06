@@ -31,7 +31,7 @@ rule make_intervals:
     container:
         CONTAINER
     params:
-        script=SCRIPT_DIR / "reformat_kmer.py",
+        script=SCRIPTS_DIR / "reformat_kmer.py",
         kmer_size=config["pan_kmer_size"],
         step_size=config["pan_kmer_step"]
     log:
