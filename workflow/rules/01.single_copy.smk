@@ -55,8 +55,9 @@ rule count_kmer:
     log:
         "logs/01.single_copy/count_kmer/{genome_id}.log"
     resources:
-        memory = config["max_mem"] // config["threads"],
-        threads = config["threads"]
+        memory = config["max_mem"],
+    threads:
+        config["threads"]
     params:
         mincount=config["min_kmer_count"],
         kmer_size=config["kmer_size"]
@@ -77,7 +78,8 @@ rule mask_genome:
         kmer_size = config["kmer_size"]
     resources:
         memory = config["max_mem"],
-        threads = config["threads"]
+    threads:
+        config["threads"]
     log:
         "logs/01.single_copy/mask_genome/{genome_id}.log"
     conda:

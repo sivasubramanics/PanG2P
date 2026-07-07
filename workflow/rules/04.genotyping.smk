@@ -31,7 +31,8 @@ rule bbduk_kmer_search:
         kmer_size = config["pan_kmer_size"],
     resources:
         memory = config["max_mem"],
-        threads = config["threads"]
+    threads:
+        config["threads"]
     benchmark:
         "benchmarks/04.genotyping/bbduk_kmer_search/{sample}.tsv"
     shell:
