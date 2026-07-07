@@ -12,6 +12,7 @@ PanGAT constructs a nonredundant haplotype block catalog from pangenome assembli
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Limitations](#limitations)
+- [AI Assistance](#ai-assistance)
 - [License](#license)
 - [Contact](#contact)
 
@@ -99,6 +100,12 @@ snakemake --use-singularity --configfile config/config.yaml
 
 - **Resource allocation** — The workflow assigns most available resources to BBTools steps. Set `max_mem` and `threads` conservatively to avoid resource contention, especially on shared systems.
 - **Intermediate files** — The workflow does not automatically clean up intermediate files on completion. Large runs can consume significant disk space; manual cleanup may be needed.
+
+---
+
+## AI Assistance
+
+AI tools, including GitHub Copilot and Claude, were used to assist with code completion, refactoring, and documentation. All AI-generated content was reviewed by the authors.
 
 ---
 
