@@ -30,7 +30,7 @@ rule bbduk_kmer_search:
     params:
         kmer_size = config["pan_kmer_size"],
     resources:
-        memory = config["max_mem"],
+        memory = config["max_mem"] * 0.9
     threads:
         config["threads"]
     benchmark:
