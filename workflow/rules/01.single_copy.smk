@@ -55,7 +55,7 @@ rule count_kmer:
     log:
         "logs/01.single_copy/count_kmer/{genome_id}.log"
     resources:
-        memory = config["max_mem"] // config["threads"]
+        memory = config["max_mem"] // config["threads"],
         threads = config["threads"]
     params:
         mincount=config["min_kmer_count"],
