@@ -29,7 +29,9 @@ rule bbduk_kmer_search:
         "logs/04.genotyping/bbduk_kmer_search/{sample}.log"
     params:
         kmer_size = config["pan_kmer_size"],
-        memory = config["max_mem"]
+    resources:
+        memory = config["max_mem"],
+        threads = config["threads"]
     benchmark:
         "benchmarks/04.genotyping/bbduk_kmer_search/{sample}.tsv"
     shell:
@@ -40,7 +42,7 @@ rule bbduk_kmer_search:
                 find {input.query} | egrep 'fq.gz$|fastq.gz$' \
                 | xargs gzip -ckd \
                 | bbduk.sh \
-                    -Xmx{params.memory}G \
+                    -Xmx{resources.memory}G \
                     -k={params.kmer_size} \
                     overwrite=t \
                     int=f \
