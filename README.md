@@ -1,8 +1,8 @@
 # PanGAT
 
-**Pangenome-Informed Genetic Analysis Toolkit (PanGAT)** — An end-to-end Snakemake workflow for identifying pangenome variation and enabling efficient genotyping for GWAS and genomic prediction in crop plants.
+**Pangenome-Informed Genetic Analysis Toolkit (PanGAT)** — An end-to-end Snakemake workflow for pangenome variation discovery and population-scale genotyping, enabling GWAS and genomic selection (GS) in crop plants.
 
-PanGAT builds a reference catalogue of single-copy, haplotype-specific *k*-mers from a pan-genome and uses it to genotype samples from raw sequencing data.
+PanGAT constructs a nonredundant haplotype block catalog from pangenome assemblies and enables scalable, alignment-free, reference-bias-free genotyping of pangenome-derived haplotypes across large populations.
 
 ---
 
