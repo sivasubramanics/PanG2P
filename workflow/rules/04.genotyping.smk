@@ -51,7 +51,8 @@ rule bbduk_kmer_search:
                     in=stdin.fq \
                     out=/dev/null \
                     rpkm={output} \
-                    nzo=f
+                    nzo=f \
+                    t={threads}
             ) > {log} 2>&1
         """
 

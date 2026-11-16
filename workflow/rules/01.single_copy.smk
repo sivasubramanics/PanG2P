@@ -65,7 +65,7 @@ rule count_kmer:
         "benchmarks/01.single_copy/count_kmer/{genome_id}.tsv"
     shell:
         "kmercountexact.sh -Xmx{resources.memory}G mincount={params.mincount} in={input[0]} \
-         out={output} k={params.kmer_size} 2> {log}"
+         out={output} k={params.kmer_size} t={threads} 2> {log}"
 
 rule mask_genome:
     input:
@@ -90,7 +90,7 @@ rule mask_genome:
         "benchmarks/01.single_copy/mask_genome/{genome_id}.tsv"
     shell:
         "bbduk.sh kmask='N' k={params.kmer_size} -Xmx{resources.memory}G in={input[0]} ref={input[1]} \
-         out={output[0]} > {output[1]} 2> {log}"
+         out={output[0]} t={threads} > {output[1]} 2> {log}"
 
 rule index_masked_genome:
     input:
