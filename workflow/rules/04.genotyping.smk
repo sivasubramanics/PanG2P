@@ -127,12 +127,12 @@ rule normalize_kmer_counts:
         overall = "work/04.genotyping/overall_counts.tsv.gz",
         mapped = "work/04.genotyping/overall_mapped_kmers.tsv.gz"
     output:
-        "work/04.genotyping/genotype_matrix.tsv.gz",
-        "work/04.genotyping/genotype_map.tsv.gz"
+        "work/04.genotyping/final.genotype.tsv",
+        "work/04.genotyping/final.GAPIT.RData"
     params:
-        script = SCRIPTS_DIR / "normalize_kmer_counts.R",
+        script = SCRIPTS_DIR / "normalize_and_export.R",
         input_dir = "work/04.genotyping/",
-        output_dir = "work/04.genotyping/"
+        output_prefix = "work/04.genotyping/final"
     conda:
         ENV_DIR / "genotyping.yaml"
     container:
@@ -143,13 +143,13 @@ rule normalize_kmer_counts:
         "benchmarks/04.genotyping/normalize_kmer_counts.tsv"
     shell:
         r"""
-        Rscript {params.script} --cm {input.mapped} --co {input.overall} --outdir {params.output_dir} > {log} 2>&1
+        Rscript {params.script} --cm {input.mapped} --co {input.overall} -o {params.output_prefix} > {log} 2>&1
         """
 
 rule genotyping_complete:
     input:
-        "work/04.genotyping/genotype_matrix.tsv.gz",
-        "work/04.genotyping/genotype_map.tsv.gz"
+        "work/04.genotyping/final.genotype.tsv",
+        "work/04.genotyping/final.GAPIT.RData"
     output:
         "work/04.genotyping/.done"
     log:
