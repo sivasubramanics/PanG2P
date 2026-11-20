@@ -75,29 +75,29 @@ The image is available from [GitHub Packages](https://github.com/sivasubramanics
 **Dry run** — validate the workflow configuration without executing any jobs:
 
 ```bash
-snakemake --dry-run --configfile config/config.yaml
+snakemake --dry-run --configfile config.yaml
 ```
 
 **Run with Conda:**
 
 ```bash
 # Using conda
-snakemake --use-conda --conda-frontend conda --configfile config/config.yaml --cores 8
+snakemake --use-conda --conda-frontend conda --configfile config.yaml --cores 8
 
 # Using mamba (faster dependency resolution)
-snakemake --use-conda --conda-frontend mamba --configfile config/config.yaml --cores 8
+snakemake --use-conda --conda-frontend mamba --configfile config.yaml --cores 8
 ```
 
 **Run with Apptainer/Singularity:**
 
 ```bash
-snakemake --use-singularity --configfile config/config.yaml --cores 8
+snakemake --use-singularity --configfile config.yaml --cores 8
 ```
 
 **Run under a SLURM:**
 
 ```bash
-sbatch -N 1 -c 42 --mem 200G -J pang2p_run -o pang2p_run.log -e pang2p_run.err snakemake --use-singularity --configfile config.yaml --cores 42
+sbatch --time 08:00:00 -N 1 -c 42 --mem 200G -J pang2p_run -o pang2p_run.log -e pang2p_run.err snakemake --use-singularity --configfile config.yaml --cores 42
 ```
 
 ---
