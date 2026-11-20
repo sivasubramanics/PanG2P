@@ -1,8 +1,8 @@
-# PanGAT
+# PanG2P
 
-**Pangenome-Informed Genetic Analysis Toolkit (PanGAT)** — An end-to-end Snakemake workflow for pangenome variation discovery and population-scale genotyping, enabling GWAS and genomic selection (GS) in crop plants.
+**PanG2P**: A pangenome-informed genome-to-phenome framework for trait mapping and prediction in crop plants.
 
-PanGAT constructs a nonredundant haplotype block catalog from pangenome assemblies and enables scalable, alignment-free, reference-bias-free genotyping of pangenome-derived haplotypes across large populations.
+PanG2P constructs a nonredundant haplotype block catalog from pangenome assemblies and enables scalable, alignment-free, reference-bias-free genotyping of pangenome-derived haplotypes across large populations.
 
 ---
 
@@ -20,16 +20,16 @@ PanGAT constructs a nonredundant haplotype block catalog from pangenome assembli
 
 ## Installation
 
-PanGAT requires [Snakemake](https://snakemake.readthedocs.io/) >=8.0
+PanG2P requires [Snakemake](https://snakemake.readthedocs.io/) >=8.0
 
 ```bash
 # Create and activate a dedicated environment
-conda create -n pangat -c bioconda snakemake
-conda activate pangat
+conda create -n pang2p -c bioconda snakemake
+conda activate pang2p
 
 # Clone the repository
-git clone git@github.com:sivasubramanics/PanGAT.git
-cd PanGAT
+git clone git@github.com:sivasubramanics/PanG2P.git
+cd PanG2P
 ```
 
 ---
@@ -58,7 +58,7 @@ The workflow is configured via `config/config.yaml`. You can edit this file dire
 
 ### Runtime environment
 
-PanGAT supports Conda, Docker, and Singularity/Apptainer environments.
+PanG2P supports Conda, Docker, and Singularity/Apptainer environments.
 
 For air-gapped systems without internet access, download the pre-built Apptainer image and point to it with the `container` key in `config.yaml`:
 
@@ -66,7 +66,7 @@ For air-gapped systems without internet access, download the pre-built Apptainer
 singularity pull pangat.sif oras://ghcr.io/sivasubramanics/pangat:f58cfca10bda
 ```
 
-The image is available from [GitHub Packages](https://github.com/sivasubramanics/PanGAT/pkgs/container/pangat).
+The image is available from [GitHub Packages](https://github.com/sivasubramanics/PanG2P/pkgs/container/pangat).
 
 ---
 
@@ -111,7 +111,7 @@ sbatch -N 1 -c 42 --mem 200G -J pang2p_run -o pang2p_run.log -e pang2p_run.err s
 
 ## AI Assistance
 
-AI tools, including GitHub Copilot and Claude, were used to assist with code completion, refactoring, and documentation. All AI-generated content was reviewed by the authors.
+AI tools, including GitHub Copilot, were used to assist with code completion, refactoring, and documentation. All AI-generated content was reviewed by the authors.
 
 ---
 
@@ -123,7 +123,7 @@ Licensed under the [GPL-3.0 License](LICENSE).
 
 ## Contact
 
-For bugs and feature requests, please [open an issue](https://github.com/sivasubramanics/PanGAT/issues) on GitHub.
+For bugs and feature requests, please [open an issue](https://github.com/sivasubramanics/PanG2P/issues) on GitHub.
 
 For questions or feedback, reach out to:
 - [muru.jayakodi@ag.tamu.edu](mailto:muru.jayakodi@ag.tamu.edu)
