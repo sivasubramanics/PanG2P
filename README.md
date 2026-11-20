@@ -97,7 +97,7 @@ snakemake --use-singularity --configfile config.yaml --cores 8
 **Run under a SLURM:**
 
 ```bash
-sbatch --time 08:00:00 -N 1 -c 42 --mem 200G -J pang2p_run -o pang2p_run.log -e pang2p_run.err snakemake --use-singularity --configfile config.yaml --cores 42
+sbatch --time 08:00:00 -N 1 -c 42 --mem 200G -J pang2p_run -o pang2p_run.log -e pang2p_run.err snakemake --use-singularity --configfile config.yaml --cores 42 --config genomes="input/genomes.csv" --config samples="input/samples.csv" --config max_mem=180 --config threads=40
 ```
 
 ---
