@@ -1,0 +1,7 @@
+id,path
+sampleA,samples/sampleA.fastq
+sampleB,samples/sampleB.fastq
+sampleC,samples/sampleC_1.fastq
+sampleC,samples/sampleC_2.fastq
+sampleD,samples/sampleD_1.fastq.gz
+sampleD,samples/sampleD_2.fastq.gz
