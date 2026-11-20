@@ -82,16 +82,22 @@ snakemake --dry-run --configfile config/config.yaml
 
 ```bash
 # Using conda
-snakemake --use-conda --conda-frontend conda --configfile config/config.yaml
+snakemake --use-conda --conda-frontend conda --configfile config/config.yaml --cores 8
 
 # Using mamba (faster dependency resolution)
-snakemake --use-conda --conda-frontend mamba --configfile config/config.yaml
+snakemake --use-conda --conda-frontend mamba --configfile config/config.yaml --cores 8
 ```
 
 **Run with Apptainer/Singularity:**
 
 ```bash
-snakemake --use-singularity --configfile config/config.yaml
+snakemake --use-singularity --configfile config/config.yaml --cores 8
+```
+
+**Run under a SLURM:**
+
+```bash
+sbatch -N 1 -c 42 --mem 200G -J pang2p_run -o pang2p_run.log -e pang2p_run.err snakemake --use-singularity --configfile config.yaml --cores 42
 ```
 
 ---
