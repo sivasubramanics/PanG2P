@@ -2,23 +2,26 @@
 def get_samples_map():
     samples = {}
     with open(config["samples"], "r") as f:
-        # skip header
-        next(f)
+        next(f)  # skip header
         for line in f:
-            sample_id, path = line.strip().split(",")
-            samples[sample_id] = path
+            line = line.strip()
+            if not line:
+                continue
+            sample_id, path = line.split(",", 1)
+            samples.setdefault(sample_id, []).append(path)
     return samples
 
 
 SAMPLES = get_samples_map()
 
-def get_fq_dir(wildcards):
+
+def get_fq_files(wildcards):
     return SAMPLES[wildcards.sample]
 
 rule bbduk_kmer_search:
     input:
         ref="work/03.pankmers/Pan_kmers.fasta",
-        query=get_fq_dir
+        query=get_fq_files
     output:
         temp("work/04.genotyping/{sample}/bbduk.tsv")
     conda:
@@ -79,6 +82,7 @@ rule summarize_kmer_counts:
             key = $1
             sub(/::.*/, "", key)
             sub(/_[0-9]+$/, "", key)
+            sub(/_L$/, "", key)
 
             n[key]++
             sum[key] += $5

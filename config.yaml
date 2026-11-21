@@ -1,17 +1,20 @@
 # Configuration file for PanGAT pipeline
 
 # Path to the genomes CSV file with genome name and path to the genome file
-genomes: "input/genomes.csv"
+genomes: "examples/genomes/genomes.csv"
+
+# samples metadata with columns [sample_id,dir_path]
+samples: "examples/samples/samples.csv"
 
 # ==================
 # General parameters
 # ==================
 
 # max memory to use (in GB) for Java Heap
-max_mem: 4
+max_mem: 8
 
 # threads to use
-threads: 2
+threads: 6
 
 # container image to use
 # if the env doens't have internet access, pull the below image and use it locally as e.g., :pangat.sif
@@ -54,6 +57,3 @@ pan_kmer_size: 51
 
 # Pan Kmer step size
 pan_kmer_step: 5
-
-# samples metadata with columns [sample_id,dir_path]
-samples: "input/samples.csv"
