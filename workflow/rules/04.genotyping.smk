@@ -135,7 +135,7 @@ rule collect_kmer_counts:
     threads:
         config["threads"]
     conda:
-        ENV_DIR / "genotyping.yaml"
+        ENV_DIR / "r.yaml"
     container:
         CONTAINER
     log:
