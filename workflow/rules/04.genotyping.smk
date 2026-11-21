@@ -33,30 +33,51 @@ rule bbduk_kmer_search:
     params:
         kmer_size = config["pan_kmer_size"],
     resources:
-        memory = config["max_mem"] * 0.9
+        memory = int(config["max_mem"] * 0.9)
     threads:
         config["threads"]
     benchmark:
         "benchmarks/04.genotyping/bbduk_kmer_search/{sample}.tsv"
     shell:
-        r"""
-            (
-                mkdir -p $(dirname {output})
+        r"""(
+            set -euo pipefail
+            mkdir -p "$(dirname "{output}")"
 
-                find {input.query} | egrep 'fq.gz$|fastq.gz$' \
-                | xargs gzip -ckd \
-                | bbduk.sh \
-                    -Xmx{resources.memory}G \
-                    -k={params.kmer_size} \
-                    overwrite=t \
-                    int=f \
-                    ref={input.ref} \
-                    in=stdin.fq \
-                    out=/dev/null \
-                    rpkm={output} \
-                    nzo=f \
-                    t={threads}
-            ) > {log} 2>&1
+            files=()
+            for f in {input.query}; do
+                case "$f" in
+                    *.fq.gz|*.fastq.gz)
+                        if [ ! -f "$f" ]; then
+                            echo "ERROR: Missing input FASTQ inside container: $f" >&2
+                            exit 1
+                        fi
+                        files+=("$f")
+                        ;;
+                    *)
+                        echo "ERROR: Unsupported file extension: $f" >&2
+                        exit 1
+                        ;;
+                esac
+            done
+
+            if [ "${{#files[@]}}" -eq 0 ]; then
+                echo "ERROR: No FASTQ files provided for {wildcards.sample}" >&2
+                exit 1
+            fi
+
+            gzip -ckd "${{files[@]}}" \
+            | bbduk.sh \
+                -Xmx{resources.memory}G \
+                -k={params.kmer_size} \
+                overwrite=t \
+                int=f \
+                ref={input.ref} \
+                in=stdin.fq \
+                out=/dev/null \
+                rpkm={output} \
+                nzo=f \
+                t={threads}
+        ) > {log} 2>&1
         """
 
 rule summarize_kmer_counts:
