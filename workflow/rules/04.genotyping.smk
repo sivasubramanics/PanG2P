@@ -159,7 +159,7 @@ rule normalize_kmer_counts:
         input_dir = "work/04.genotyping/",
         output_prefix = "work/04.genotyping/final"
     conda:
-        ENV_DIR / "genotyping.yaml"
+        ENV_DIR / "r.yaml"
     container:
         CONTAINER
     log:
