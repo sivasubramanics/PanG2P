@@ -202,16 +202,16 @@ def prepare_inputs(genomes: Path, samples: Path, outdir: Path):
     if len(rows) < 2 or len(rows[0]) < 2:
         errors.append(f"{samples}: need a header plus rows with 2 columns (sample_id,dir_path)")
     else:
-        s_hdr, seen = rows[0][:2], set()
+        s_hdr = rows[0][:2]
         fq_re = re.compile(r"(\.fq\.gz|\.fastq\.gz)$")
         for n, r in enumerate(rows[1:], start=2):
             if len(r) < 2:
                 errors.append(f"{samples}:{n}: too few columns")
                 continue
             sid, d = r[0], _resolve_path(r[1], samples.parent)
-            if sid in seen:
-                errors.append(f"{samples}:{n}: duplicate sample '{sid}'")
-            seen.add(sid)
+            if not sid:
+                errors.append(f"{samples}:{n}: empty sample_id")
+                continue
             if d.is_file():
                 if not fq_re.search(d.name):
                     errors.append(f"{samples}:{n}: file must end in .fq.gz or .fastq.gz: {d}")
