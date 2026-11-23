@@ -2,15 +2,21 @@
 def get_samples_map():
     samples = {}
     with open(config["samples"], "r") as f:
-        # skip header
-        next(f)
+        next(f)  # skip header
         for line in f:
-            sample_id, path = line.strip().split(",")
-            samples[sample_id] = path
+            line = line.strip()
+            if not line:
+                continue
+            sample_id, path = line.split(",", 1)
+            samples.setdefault(sample_id, []).append(path)
     return samples
 
 
 SAMPLES = get_samples_map()
+
+
+def get_fq_files(wildcards):
+    return SAMPLES[wildcards.sample]
 
 def get_fq_dir(wildcards):
     return SAMPLES[wildcards.sample]
@@ -18,7 +24,7 @@ def get_fq_dir(wildcards):
 rule bbduk_kmer_search:
     input:
         ref="work/03.pankmers/Pan_kmers.fasta",
-        query=get_fq_dir
+        query=get_fq_files
     output:
         temp("work/04.genotyping/{sample}/bbduk.tsv")
     conda:
@@ -30,30 +36,51 @@ rule bbduk_kmer_search:
     params:
         kmer_size = config["pan_kmer_size"],
     resources:
-        memory = config["max_mem"] * 0.9
+        memory = int(config["max_mem"] * 0.9)
     threads:
         config["threads"]
     benchmark:
         "benchmarks/04.genotyping/bbduk_kmer_search/{sample}.tsv"
     shell:
-        r"""
-            (
-                mkdir -p $(dirname {output})
+        r"""(
+            set -euo pipefail
+            mkdir -p "$(dirname "{output}")"
 
-                find {input.query} | egrep 'fq.gz$|fastq.gz$' \
-                | xargs gzip -ckd \
-                | bbduk.sh \
-                    -Xmx{resources.memory}G \
-                    -k={params.kmer_size} \
-                    overwrite=t \
-                    int=f \
-                    ref={input.ref} \
-                    in=stdin.fq \
-                    out=/dev/null \
-                    rpkm={output} \
-                    nzo=f \
-                    t={threads}
-            ) > {log} 2>&1
+            files=()
+            for f in {input.query}; do
+                case "$f" in
+                    *.fq.gz|*.fastq.gz)
+                        if [ ! -f "$f" ]; then
+                            echo "ERROR: Missing input FASTQ inside container: $f" >&2
+                            exit 1
+                        fi
+                        files+=("$f")
+                        ;;
+                    *)
+                        echo "ERROR: Unsupported file extension: $f" >&2
+                        exit 1
+                        ;;
+                esac
+            done
+
+            if [ "${{#files[@]}}" -eq 0 ]; then
+                echo "ERROR: No FASTQ files provided for {wildcards.sample}" >&2
+                exit 1
+            fi
+
+            gzip -ckd "${{files[@]}}" \
+            | bbduk.sh \
+                -Xmx{resources.memory}G \
+                -k={params.kmer_size} \
+                overwrite=t \
+                int=f \
+                ref={input.ref} \
+                in=stdin.fq \
+                out=/dev/null \
+                rpkm={output} \
+                nzo=f \
+                t={threads}
+        ) > {log} 2>&1
         """
 
 rule summarize_kmer_counts:
@@ -110,7 +137,7 @@ rule collect_kmer_counts:
     threads:
         config["threads"]
     conda:
-        ENV_DIR / "genotyping.yaml"
+        ENV_DIR / "r.yaml"
     container:
         CONTAINER
     log:
@@ -134,7 +161,7 @@ rule normalize_kmer_counts:
         input_dir = "work/04.genotyping/",
         output_prefix = "work/04.genotyping/final"
     conda:
-        ENV_DIR / "genotyping.yaml"
+        ENV_DIR / "r.yaml"
     container:
         CONTAINER
     log:

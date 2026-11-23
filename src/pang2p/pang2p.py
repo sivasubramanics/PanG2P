@@ -32,16 +32,16 @@ sm_log.propagate = False
 
 # defaults from the config.yaml; overridden by --configfile and CLI flags
 PARAMS = {
-    "kmer_size":      ("--kmer-size", int, "k-mer size for single-copy region detection"),
-    "min_kmer_count": ("--min-kmer-count", int, "minimum k-mer count for masking repeats"),
-    "min_length":     ("--min-length", int, "minimum length of a single-copy region"),
-    "merge_gap":      ("--merge-gap", int, "max gap between single-copy regions to merge"),
-    "min_seq_id":     ("--min-seq-id", float, "mmseqs minimum sequence identity"),
-    "min_coverage":   ("--min-coverage", float, "mmseqs minimum coverage"),
-    "coverage_mode":  ("--coverage-mode", int, "mmseqs coverage mode"),
-    "pan_kmer_size":  ("--pan-kmer-size", int, "pan-kmer size"),
-    "pan_kmer_step":  ("--pan-kmer-step", int, "pan-kmer step size"),
-    "container":      ("--container", str, "container image (.sif path or oras:// URI)"),
+    # "kmer_size":      ("--kmer-size", int, "k-mer size for single-copy region detection"),
+    # "min_kmer_count": ("--min-kmer-count", int, "minimum k-mer count for masking repeats"),
+    # "min_length":     ("--min-length", int, "minimum length of a single-copy region"),
+    # "merge_gap":      ("--merge-gap", int, "max gap between single-copy regions to merge"),
+    # "min_seq_id":     ("--min-seq-id", float, "mmseqs minimum sequence identity"),
+    # "min_coverage":   ("--min-coverage", float, "mmseqs minimum coverage"),
+    # "coverage_mode":  ("--coverage-mode", int, "mmseqs coverage mode"),
+    # "pan_kmer_size":  ("--pan-kmer-size", int, "pan-kmer size"),
+    # "pan_kmer_step":  ("--pan-kmer-step", int, "pan-kmer step size"),
+    # "container":      ("--container", str, "container image (.sif path or oras:// URI)"),
 }
 
 
@@ -84,8 +84,8 @@ def build_parser(d: dict) -> argparse.ArgumentParser:
     g.add_argument("-s", "--samples", type=Path, help="CSV with columns: sample_id,dir_path")
     g.add_argument("-o", "--outdir", type=Path, default=Path("pang2p_out"),
                    help="output directory [pang2p_out]")
-    g.add_argument("-c", "--configfile", type=Path,
-                   help="YAML overriding the packaged defaults (CLI flags still win)")
+    # g.add_argument("-c", "--configfile", type=Path,
+    #                help="YAML overriding the packaged defaults (CLI flags still win)")
 
     g = p.add_argument_group("resources")
     g.add_argument("-t", "--threads", type=int, help=f"threads [{d['threads']}]")
