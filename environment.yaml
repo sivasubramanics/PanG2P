@@ -1,0 +1,12 @@
+name: pang2p
+channels: [conda-forge, bioconda]
+dependencies:
+  - python>=3.9
+  - snakemake>=9
+  - pandas
+  - pyyaml
+  - apptainer
+  - micromamba
+  - pip
+  - pip:
+      - .

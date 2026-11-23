@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "workflow/singularity/**"
+      - "src/pang2p/workflow/singularity/**"
       - ".github/workflows/build_and_push_containers.yml"
 
 jobs:
@@ -25,15 +25,13 @@ jobs:
 
       - name: Compute content hash
         run: |
-          FILES="workflow/singularity/pangat.def workflow/singularity/environment.yaml"
+          FILES="src/pang2p/workflow/singularity/pangat.def src/pang2p/workflow/singularity/environment.yaml"
           HASH=$(sha256sum $FILES | sort | sha256sum | cut -c1-12)
           echo "IMAGE_TAG=$HASH" >> "$GITHUB_ENV"
 
       - name: Build container
         run: |
-          cd workflow/singularity
-          apptainer build ../../pangat.sif pangat.def
-
+          apptainer build pangat.sif src/pang2p/workflow/singularity/pangat.def
       - name: Login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" \
