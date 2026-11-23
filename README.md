@@ -143,7 +143,6 @@ pang2p -g genomes.csv -s samples.csv -t 8 -m 16g --use-conda
 | `-t, --threads` | Threads per job |
 | `-m, --memory` | Memory for Java tools, e.g. `200g` |
 | `--use-conda` / `--use-container` | Software environment |
-| `--container` | Container image (`.sif` path or `oras://` URI) |
 | `--skip-checks` | Skip dependency checks and environment auto-selection |
 | `-n, --dry-run` | Show what would run |
 | `--unlock` | Remove a stale lock after a crashed run, then exit |
