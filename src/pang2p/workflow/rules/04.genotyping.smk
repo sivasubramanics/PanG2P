@@ -138,8 +138,6 @@ rule collect_kmer_counts:
         config["threads"]
     conda:
         ENV_DIR / "r.yaml"
-    container:
-        CONTAINER
     log:
         "logs/04.genotyping/collect_kmer_counts.log"
     benchmark:
@@ -162,8 +160,6 @@ rule normalize_kmer_counts:
         output_prefix = "work/04.genotyping/final"
     conda:
         ENV_DIR / "r.yaml"
-    container:
-        CONTAINER
     log:
         "logs/04.genotyping/normalize_kmer_counts.log"
     benchmark:

@@ -38,8 +38,14 @@ def parse_mem_gb(value) -> int:
     if not m:
         raise argparse.ArgumentTypeError(f"invalid memory value: {value!r} (e.g. 200g)")
     gb = float(m.group(1)) * {"k": 1e-6, "m": 1e-3, "g": 1, "t": 1000}[m.group(2) or "g"]
+    if gb <= 0:
+        raise argparse.ArgumentTypeError("memory must be greater than 0")
+
     return max(1, int(gb))
 
+def get_conda_frontend() -> str:
+    """Use Mamba when available; otherwise use Conda."""
+    return "mamba" if shutil.which("mamba") else "conda"
 
 # Utility Function: Load Packaged Config from config.yaml
 def load_config() -> dict:
@@ -58,7 +64,7 @@ def has_apptainer() -> bool:
 
 # Utility Function: Check for Conda/Mamba
 def has_conda() -> bool:
-    return any(shutil.which(x) for x in ("mamba", "conda", "micromamba"))
+    return any(shutil.which(x) for x in ("mamba", "conda"))
 
 
 # Utility Function: Argparse Parser for CLI
@@ -81,13 +87,9 @@ def build_parser(d: dict) -> argparse.ArgumentParser:
     g.add_argument("-m", "--memory", type=parse_mem_gb,
                    help=f"memory in GB for Java tools, e.g. 200g [{d.get('max_mem', 4)}g]")
 
-    g = p.add_argument_group("software environment")
-    g.add_argument("--use-conda", action="store_true", help="use per-rule conda envs")
-    g.add_argument("--use-container", action="store_true",
-                   help="run rules in the Apptainer/Singularity image")
     g.add_argument("--skip-checks", action="store_true",
-                   help="skip dependency checks and environment auto-selection "
-                        "(use when the tools are already on PATH, e.g. inside Docker)")
+                   help="skip preflight dependency checks (Snakemake still requires "
+                        "Apptainer and Conda when executing rules that use them)")
 
     g = p.add_argument_group("run control")
     g.add_argument("-n", "--dry-run", action="store_true", help="show what would run")
@@ -142,21 +144,18 @@ def snakemake_info():
 
 
 # Utility Function: Preflight Checks
-def preflight(use_conda: bool, use_container: bool, have_snakemake: bool):
+def preflight(have_snakemake: bool):
     errors = []
+
     if not have_snakemake:
         errors.append("snakemake not found on PATH (pip install 'snakemake>=8').")
-    if use_container and not has_apptainer():
-        msg = "--use-container needs apptainer (or singularity) on PATH."
-        if sys.platform == "darwin":
-            msg += " Apptainer does not run natively on macOS; use --use-conda instead."
-        errors.append(msg)
-    if use_conda and not has_conda():
-        errors.append("--use-conda needs conda, mamba or micromamba on PATH.")
-    if not use_conda and not use_container:
-        errors.append("no software environment available: install apptainer or conda "
-                      "(mamba/micromamba), or pass --skip-checks if the tools are "
-                      "already on PATH (e.g. inside the Docker image).")
+
+    if not has_apptainer():
+        errors.append("Apptainer/Singularity is required for container-based rules.")
+
+    if not has_conda():
+        errors.append("Conda, Mamba or Micromamba is required for conda-based rules.")
+
     return errors
 
 
@@ -242,15 +241,10 @@ def build_command(args, cfg_path: Path, outdir: Path, threads: int, sm_exe: str,
            "--cores", str(threads), "--configfile", str(cfg_path),
            "--rerun-incomplete", "--printshellcmds"]
 
-    methods = (["conda"] if args.use_conda else []) + (["apptainer"] if args.use_container else [])
-    if methods:
-        if "--software-deployment-method" in sm_help:
-            cmd += ["--software-deployment-method", *methods]
-        else:
-            if args.use_conda:
-                cmd.append("--use-conda")
-            if args.use_container:
-                cmd.append("--use-apptainer" if "--use-apptainer" in sm_help else "--use-singularity")
+    cmd += [
+        "--software-deployment-method", "apptainer", "conda",
+        "--conda-frontend", get_conda_frontend()
+    ]
 
     if args.unlock:
         cmd.append("--unlock")
@@ -303,6 +297,9 @@ def main(argv=None) -> int:
     parser = build_parser(cfg)
     args = parser.parse_args(argv)
 
+    if args.retries < 0:
+        parser.error("--retries must be >= 0")
+
     if args.threads is not None:
         cfg["threads"] = args.threads
     if args.memory is not None:
@@ -332,20 +329,21 @@ def main(argv=None) -> int:
     log.debug("command line: %s", " ".join(sys.argv))
     log.info("run log: %s", run_log)
 
-    if not args.use_conda and not args.use_container and not args.skip_checks:
-        if has_apptainer():
-            args.use_container = True
-        elif has_conda():
-            args.use_conda = True
-        if args.use_container or args.use_conda:
-            log.info("no environment flag given; using %s",
-                     "apptainer container" if args.use_container else "conda")
-
     sm_exe, sm_ver, sm_help = snakemake_info()
+    if sm_exe:
+        try:
+            sm_major = int(sm_ver.split(".")[0])
+        except (ValueError, IndexError):
+            log.error("Could not determine Snakemake version: %s", sm_ver)
+            return 2
+
+        if sm_major < 9:
+            log.error("Snakemake >= 9 is required; found %s", sm_ver)
+            return 2
     if sm_exe:
         log.info("snakemake %s (%s)", sm_ver, sm_exe)
     if not args.skip_checks:
-        errors = preflight(args.use_conda, args.use_container, bool(sm_exe))
+        errors = preflight(bool(sm_exe))
         if errors:
             for e in errors:
                 log.error(e)

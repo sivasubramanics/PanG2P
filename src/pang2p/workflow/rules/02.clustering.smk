@@ -60,8 +60,6 @@ rule get_cluster_representatives:
         bed="work/02.clustering/pan_cluster_bed_rep.txt"
     conda:
         ENV_DIR / "r.yaml"
-    container:
-        CONTAINER
     params:
         script=SCRIPTS_DIR / "cluster_representatives.R",
     log:

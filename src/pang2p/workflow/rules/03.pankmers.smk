@@ -25,13 +25,12 @@ rule make_intervals:
     input:
         "work/03.pankmers/{genome}.tsv"
     output:
-        "work/03.pankmers/{genome}_interval_formatted.bed"
+        temp("work/03.pankmers/{genome}_intervals.bed")
     conda:
         ENV_DIR / "pankmers.yaml"
     container:
         CONTAINER
     params:
-        script=SCRIPTS_DIR / "reformat_kmer.py",
         kmer_size=config["pan_kmer_size"],
         step_size=config["pan_kmer_step"]
     log:
@@ -40,16 +39,37 @@ rule make_intervals:
         "benchmarks/03.pankmers/make_intervals/{genome}.tsv"
     shell:
         r"""
-        tmp=$(mktemp)
+        set -euo pipefail
 
-        bedtools makewindows -b {input} -w {params.kmer_size} -s {params.step_size} -i src \
+        bedtools makewindows \
+            -b {input} \
+            -w {params.kmer_size} \
+            -s {params.step_size} \
+            -i src \
         | awk 'BEGIN{{OFS="\t"}} {{print $1,$2,$3,$4,($3-$2)}}' \
         | awk '$5=={params.kmer_size}' \
-        | cut -f1-4 > "$tmp"
+        | cut -f1-4 > {output}
+        """
 
-        python {params.script} "$tmp" {output}
 
-        rm -f "$tmp"
+rule format_intervals:
+    input:
+        "work/03.pankmers/{genome}_intervals.bed"
+    output:
+        "work/03.pankmers/{genome}_interval_formatted.bed"
+    conda:
+        ENV_DIR / "pankmers.yaml"
+    params:
+        script=SCRIPTS_DIR / "reformat_kmer.py"
+    log:
+        "logs/03.pankmers/format_intervals/{genome}.log"
+    benchmark:
+        "benchmarks/03.pankmers/format_intervals/{genome}.tsv"
+    shell:
+        r"""
+        set -euo pipefail
+
+        python {params.script} {input} {output}
         """
 
 rule extract_kmers:
