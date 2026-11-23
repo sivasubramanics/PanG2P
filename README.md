@@ -140,12 +140,8 @@ pang2p -g genomes.csv -s samples.csv -t 8 -m 16g --use-conda
 | `-g, --genomes` | Genomes CSV (`id,path`) |
 | `-s, --samples` | Samples CSV (`sample_id,path`) |
 | `-o, --outdir` | Output directory [`pang2p_out`] |
-| `-c, --configfile` | YAML file overriding the packaged defaults (CLI flags still win) |
 | `-t, --threads` | Threads per job |
 | `-m, --memory` | Memory for Java tools, e.g. `200g` |
-| `--kmer-size`, `--min-kmer-count`, `--min-length`, `--merge-gap` | Single-copy region parameters (see below) |
-| `--min-seq-id`, `--min-coverage`, `--coverage-mode` | MMseqs2 clustering parameters |
-| `--pan-kmer-size`, `--pan-kmer-step` | Pan-k-mer catalogue parameters |
 | `--use-conda` / `--use-container` | Software environment |
 | `--container` | Container image (`.sif` path or `oras://` URI) |
 | `--skip-checks` | Skip dependency checks and environment auto-selection |
@@ -157,43 +153,6 @@ pang2p -g genomes.csv -s samples.csv -t 8 -m 16g --use-conda
 | `--ignore-changes` | On resume, rerun only when files are missing or newer |
 | `-v, --verbose` / `-q, --quiet` | Debug / warnings-only console output |
 | `--snakemake-args ...` | Pass everything after it to Snakemake unchanged (must be last) |
-
-Run `pang2p --help` to see the defaults for your installed version.
-
-## Configuration
-
-Defaults live in the packaged `config.yaml`. Settings are merged in this order, with later sources winning:
-
-1. packaged defaults
-2. a YAML file passed with `-c/--configfile`
-3. command-line flags
-
-The effective settings of every run are saved to `<outdir>/pang2p_config.yaml`.
-
-| Parameter | Default | Description |
-|---|---|---|
-| `genomes` | — | Path to the CSV listing input genomes (`id,path`) |
-| `samples` | — | Path to the CSV listing sequencing samples (`sample_id,path`) |
-| `max_mem` | 4 | Memory (GB) for the Java heap of each BBTools job |
-| `threads` | 2 | Threads allocated per job |
-| `container` | `oras://ghcr.io/sivasubramanics/pangat:f58cfca10bda` | Container image |
-| `kmer_size` | 31 | k-mer size for building the single-copy reference |
-| `min_kmer_count` | 2 | Minimum k-mer occurrences required to mask a genome region |
-| `min_length` | 100 | Minimum length (bp) of a single-copy region |
-| `merge_gap` | 50 | Maximum gap (bp) between regions to merge into one |
-| `min_seq_id` | 0.9 | Minimum sequence identity for MMseqs2 clustering |
-| `min_coverage` | 0.8 | Minimum coverage for MMseqs2 clustering |
-| `coverage_mode` | 1 | Coverage mode for MMseqs2 clustering |
-| `pan_kmer_size` | 51 | k-mer size for the pan-k-mer reference catalogue |
-| `pan_kmer_step` | 5 | k-mer step size for the pan-k-mer reference catalogue |
-
-Example custom config:
-
-```yaml
-# my_config.yaml
-min_seq_id: 0.95
-pan_kmer_size: 51
-```
 
 ```bash
 pang2p -g genomes.csv -s samples.csv -c my_config.yaml -t 32 -m 200g
