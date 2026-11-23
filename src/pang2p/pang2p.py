@@ -30,20 +30,6 @@ log = logging.getLogger("pang2p")
 sm_log = logging.getLogger("pang2p.snakemake")
 sm_log.propagate = False
 
-# defaults from the config.yaml; overridden by --configfile and CLI flags
-PARAMS = {
-    # "kmer_size":      ("--kmer-size", int, "k-mer size for single-copy region detection"),
-    # "min_kmer_count": ("--min-kmer-count", int, "minimum k-mer count for masking repeats"),
-    # "min_length":     ("--min-length", int, "minimum length of a single-copy region"),
-    # "merge_gap":      ("--merge-gap", int, "max gap between single-copy regions to merge"),
-    # "min_seq_id":     ("--min-seq-id", float, "mmseqs minimum sequence identity"),
-    # "min_coverage":   ("--min-coverage", float, "mmseqs minimum coverage"),
-    # "coverage_mode":  ("--coverage-mode", int, "mmseqs coverage mode"),
-    # "pan_kmer_size":  ("--pan-kmer-size", int, "pan-kmer size"),
-    # "pan_kmer_step":  ("--pan-kmer-step", int, "pan-kmer step size"),
-    # "container":      ("--container", str, "container image (.sif path or oras:// URI)"),
-}
-
 
 # Utility Function: Parse Memory
 def parse_mem_gb(value) -> int:
@@ -55,20 +41,25 @@ def parse_mem_gb(value) -> int:
     return max(1, int(gb))
 
 
-# Utility Function: Load Default Config from config.yaml
-def load_defaults() -> dict:
+# Utility Function: Load Packaged Config from config.yaml
+def load_config() -> dict:
+    if not DEFAULT_CONFIG.is_file():
+        raise FileNotFoundError(f"workflow configuration not found: {DEFAULT_CONFIG}")
     cfg = yaml.safe_load(DEFAULT_CONFIG.read_text()) or {}
     cfg.pop("genomes", None)
     cfg.pop("samples", None)
     return cfg
 
+
 # Utility Function: Check for Apptainer/Singularity
 def has_apptainer() -> bool:
     return bool(shutil.which("apptainer") or shutil.which("singularity"))
 
+
 # Utility Function: Check for Conda/Mamba
 def has_conda() -> bool:
     return any(shutil.which(x) for x in ("mamba", "conda", "micromamba"))
+
 
 # Utility Function: Argparse Parser for CLI
 def build_parser(d: dict) -> argparse.ArgumentParser:
@@ -80,22 +71,15 @@ def build_parser(d: dict) -> argparse.ArgumentParser:
     p.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
 
     g = p.add_argument_group("input / output")
-    g.add_argument("-g", "--genomes", type=Path, help="CSV with columns: id,path")
-    g.add_argument("-s", "--samples", type=Path, help="CSV with columns: sample_id,dir_path")
+    g.add_argument("-g", "--genomes", type=Path, required=True, help="CSV with columns: id,path")
+    g.add_argument("-s", "--samples", type=Path, required=True, help="CSV with columns: sample_id,dir_path")
     g.add_argument("-o", "--outdir", type=Path, default=Path("pang2p_out"),
                    help="output directory [pang2p_out]")
-    # g.add_argument("-c", "--configfile", type=Path,
-    #                help="YAML overriding the packaged defaults (CLI flags still win)")
 
     g = p.add_argument_group("resources")
-    g.add_argument("-t", "--threads", type=int, help=f"threads [{d['threads']}]")
+    g.add_argument("-t", "--threads", type=int, help=f"threads [{d.get('threads', 2)}]")
     g.add_argument("-m", "--memory", type=parse_mem_gb,
-                   help=f"memory in GB for Java tools, e.g. 200g [{d['max_mem']}g]")
-
-    g = p.add_argument_group("workflow parameters (defaults from config.yaml)")
-    for key, (flag, typ, text) in PARAMS.items():
-        g.add_argument(flag, dest=key, type=typ, default=None,
-                       help=f"{text} [{d.get(key)}]")
+                   help=f"memory in GB for Java tools, e.g. 200g [{d.get('max_mem', 4)}g]")
 
     g = p.add_argument_group("software environment")
     g.add_argument("--use-conda", action="store_true", help="use per-rule conda envs")
@@ -121,16 +105,12 @@ def build_parser(d: dict) -> argparse.ArgumentParser:
     g.add_argument("-v", "--verbose", action="store_true", help="debug messages")
     g.add_argument("-q", "--quiet", action="store_true",
                    help="only warnings on console (everything still goes to the log file)")
-
-    p.add_argument("--snakemake-args", nargs=argparse.REMAINDER, default=[],
-                   help="everything after this is passed to snakemake as-is")
     return p
+
 
 # Logging Setup
 def setup_logging(logdir: Path, verbose: bool, quiet: bool) -> Path:
-    """
-    Set up logging for the pang2p workflow.
-    """
+    """Set up logging for the pang2p workflow."""
     logdir.mkdir(parents=True, exist_ok=True)
     path = logdir / f"run_{dt.datetime.now():%Y%m%d_%H%M%S}.log"
     log.setLevel(logging.DEBUG)
@@ -145,10 +125,11 @@ def setup_logging(logdir: Path, verbose: bool, quiet: bool) -> Path:
     fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"))
     log.addHandler(fh)
 
-    raw = logging.FileHandler(path)          # snakemake lines go in verbatim
+    raw = logging.FileHandler(path)  # snakemake lines go in verbatim
     raw.setFormatter(logging.Formatter("%(message)s"))
     sm_log.addHandler(raw)
     return path
+
 
 # Utility Function: Get Snakemake Info
 def snakemake_info():
@@ -159,12 +140,12 @@ def snakemake_info():
     h = subprocess.run([exe, "--help"], capture_output=True, text=True)
     return exe, ver, h.stdout + h.stderr
 
+
 # Utility Function: Preflight Checks
 def preflight(use_conda: bool, use_container: bool, have_snakemake: bool):
     errors = []
     if not have_snakemake:
         errors.append("snakemake not found on PATH (pip install 'snakemake>=8').")
-
     if use_container and not has_apptainer():
         msg = "--use-container needs apptainer (or singularity) on PATH."
         if sys.platform == "darwin":
@@ -184,16 +165,15 @@ def _read_csv(path: Path):
     with open(path, newline="") as fh:
         return [[c.strip() for c in r] for r in csv.reader(fh) if any(c.strip() for c in r)]
 
-# Utility Function: Prepare Inputs for genomes.csv and samples.csv
+
+def _resolve_path(p, base: Path) -> Path:
+    p = Path(p).expanduser()
+    return (p if p.is_absolute() else base / p).resolve()
+
+
 def prepare_inputs(genomes: Path, samples: Path, outdir: Path):
     """Validate both CSVs; write copies with absolute paths into <outdir>/inputs/."""
-    errors, warnings = [], []
-
-    def resolve(p, base):
-        p = Path(p).expanduser()
-        return (p if p.is_absolute() else base / p).resolve()
-
-    g_out, s_out = [], []
+    errors, warnings, g_out, s_out = [], [], [], []
 
     rows = _read_csv(genomes)
     hdr = rows[0] if rows else []
@@ -205,7 +185,7 @@ def prepare_inputs(genomes: Path, samples: Path, outdir: Path):
             if len(r) <= max(i, j):
                 errors.append(f"{genomes}:{n}: too few columns")
                 continue
-            gid, gp = r[i], resolve(r[j], genomes.parent)
+            gid, gp = r[i], _resolve_path(r[j], genomes.parent)
             if gid in seen:
                 errors.append(f"{genomes}:{n}: duplicate id '{gid}'")
             seen.add(gid)
@@ -228,7 +208,7 @@ def prepare_inputs(genomes: Path, samples: Path, outdir: Path):
             if len(r) < 2:
                 errors.append(f"{samples}:{n}: too few columns")
                 continue
-            sid, d = r[0], resolve(r[1], samples.parent)
+            sid, d = r[0], _resolve_path(r[1], samples.parent)
             if sid in seen:
                 errors.append(f"{samples}:{n}: duplicate sample '{sid}'")
             seen.add(sid)
@@ -264,14 +244,13 @@ def build_command(args, cfg_path: Path, outdir: Path, threads: int, sm_exe: str,
 
     methods = (["conda"] if args.use_conda else []) + (["apptainer"] if args.use_container else [])
     if methods:
-        if "--software-deployment-method" in sm_help:       # newer snakemake
+        if "--software-deployment-method" in sm_help:
             cmd += ["--software-deployment-method", *methods]
         else:
             if args.use_conda:
                 cmd.append("--use-conda")
             if args.use_container:
-                cmd.append("--use-apptainer" if "--use-apptainer" in sm_help
-                           else "--use-singularity")
+                cmd.append("--use-apptainer" if "--use-apptainer" in sm_help else "--use-singularity")
 
     if args.unlock:
         cmd.append("--unlock")
@@ -285,7 +264,7 @@ def build_command(args, cfg_path: Path, outdir: Path, threads: int, sm_exe: str,
         cmd += ["--retries" if "--retries" in sm_help else "--restart-times", str(args.retries)]
     if args.ignore_changes:
         cmd += ["--rerun-triggers", "mtime"]
-    return cmd + args.snakemake_args
+    return cmd
 
 
 # Pipeline Function: Run Snakemake and Stream Output
@@ -304,7 +283,6 @@ def run_snakemake(cmd, quiet: bool):
                 locked = True
         return proc.wait(), locked
     except KeyboardInterrupt:
-        # Ctrl-C already reached snakemake (same process group); just wait for it to clean up.
         log.warning("Interrupted. Waiting for snakemake to stop running jobs ...")
         try:
             proc.wait(timeout=60)
@@ -316,56 +294,44 @@ def run_snakemake(cmd, quiet: bool):
 
 # Main Function: Parse Args, Validate Inputs, Run Snakemake
 def main(argv=None) -> int:
-    defaults = load_defaults()
-    parser = build_parser(defaults)
+    try:
+        cfg = load_config()
+    except (OSError, yaml.YAMLError) as e:
+        print(f"ERROR: could not load workflow configuration: {e}", file=sys.stderr)
+        return 2
+
+    parser = build_parser(cfg)
     args = parser.parse_args(argv)
 
-    # ---- merge config: packaged defaults < --configfile < CLI flags
-    user_cfg = {}
-    if args.configfile:
-        if not args.configfile.is_file():
-            parser.error(f"config file not found: {args.configfile}")
-        user_cfg = yaml.safe_load(args.configfile.read_text()) or {}
-    cfg = {**defaults, **user_cfg}
-    for key in PARAMS:
-        if getattr(args, key) is not None:
-            cfg[key] = getattr(args, key)
     if args.threads is not None:
         cfg["threads"] = args.threads
     if args.memory is not None:
         cfg["max_mem"] = args.memory
+
     try:
         cfg["max_mem"] = parse_mem_gb(cfg["max_mem"])
-    except argparse.ArgumentTypeError as e:
+    except (KeyError, argparse.ArgumentTypeError) as e:
         parser.error(str(e))
-    cfg["threads"] = int(cfg["threads"])
+    try:
+        cfg["threads"] = int(cfg["threads"])
+    except (KeyError, TypeError, ValueError):
+        parser.error("invalid threads value in packaged config.yaml")
     if cfg["threads"] < 1:
         parser.error("threads must be >= 1")
 
-    genomes = args.genomes or user_cfg.get("genomes")
-    samples = args.samples or user_cfg.get("samples")
-    if not genomes or not samples:
-        parser.error("genomes (-g) and samples (-s) are required "
-                     "(on the command line or in --configfile)")
-    genomes, samples = Path(genomes).expanduser().resolve(), Path(samples).expanduser().resolve()
+    genomes = Path(args.genomes).expanduser().resolve()
+    samples = Path(args.samples).expanduser().resolve()
     for f in (genomes, samples):
         if not f.is_file():
             parser.error(f"file not found: {f}")
 
-    # ---- logging
-    outdir = args.outdir.resolve()
+    outdir = Path(args.outdir).resolve()
     outdir.mkdir(parents=True, exist_ok=True)
     run_log = setup_logging(outdir / "logs" / "pang2p", args.verbose, args.quiet)
     log.info("pang2p %s | python %s | %s", __version__, sys.version.split()[0], sys.platform)
     log.debug("command line: %s", " ".join(sys.argv))
     log.info("run log: %s", run_log)
 
-    unknown = set(user_cfg) - set(defaults) - {"genomes", "samples"}
-    if unknown:
-        log.warning("unknown keys in %s (ignored by the workflow): %s",
-                    args.configfile, ", ".join(sorted(unknown)))
-
-    # ---- choose a software environment if none was requested
     if not args.use_conda and not args.use_container and not args.skip_checks:
         if has_apptainer():
             args.use_container = True
@@ -375,7 +341,6 @@ def main(argv=None) -> int:
             log.info("no environment flag given; using %s",
                      "apptainer container" if args.use_container else "conda")
 
-    # ---- dependency preflight
     sm_exe, sm_ver, sm_help = snakemake_info()
     if sm_exe:
         log.info("snakemake %s (%s)", sm_ver, sm_exe)
@@ -389,7 +354,6 @@ def main(argv=None) -> int:
         log.error("snakemake not found on PATH")
         return 2
 
-    # ---- inputs
     g_csv, s_csv, errors, warnings = prepare_inputs(genomes, samples, outdir)
     for w in warnings:
         log.warning(w)
@@ -399,8 +363,8 @@ def main(argv=None) -> int:
         if len(errors) > 20:
             log.error("... and %d more", len(errors) - 20)
         return 2
-    cfg["genomes"], cfg["samples"] = str(g_csv), str(s_csv)
 
+    cfg["genomes"], cfg["samples"] = str(g_csv), str(s_csv)
     cfg_path = outdir / "pang2p_config.yaml"
     if cfg_path.exists():
         old = yaml.safe_load(cfg_path.read_text()) or {}
@@ -413,7 +377,6 @@ def main(argv=None) -> int:
     cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False))
     log.info("effective config: %s", cfg_path)
 
-    # ---- run
     cmd = build_command(args, cfg_path, outdir, cfg["threads"], sm_exe, sm_help)
     log.info("running: %s", " ".join(cmd))
     t0 = time.monotonic()
@@ -431,6 +394,7 @@ def main(argv=None) -> int:
         elif rc != 130:
             log.error("fix the problem and re-run the same command to resume.")
     return rc
+
 
 # Entry point for CLI
 if __name__ == "__main__":
