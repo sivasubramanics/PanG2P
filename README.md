@@ -41,7 +41,7 @@ Apptainer and conda are not pip-installable, so install one of them separately (
 
 ```bash
 # Create and activate a dedicated environment
-micromamba create -n pang2p -c conda-forge -c bioconda python=3.12 "snakemake>=9" pandas pyyaml
+micromamba create -n pang2p -c conda-forge -c bioconda python=3.12 "snakemake>=9" pandas pyyaml apptainer
 micromamba activate pang2p
 
 # Install PanG2P
