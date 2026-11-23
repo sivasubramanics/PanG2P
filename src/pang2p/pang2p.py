@@ -26,6 +26,27 @@ WORKFLOW_DIR = Path(__file__).parent / "workflow"
 SNAKEFILE = WORKFLOW_DIR / "Snakefile"
 DEFAULT_CONFIG = WORKFLOW_DIR / "config.yaml"
 
+# NEW: tools that must be on PATH when running with --no-conda.
+# Add every BBMap script the Snakefile calls (e.g. bbduk.sh, bbmerge.sh, pileup.sh).
+REQUIRED_BINS = [
+    "mmseqs",
+    "samtools",
+    "bedtools",
+    "faToTwoBit",
+    "twoBitInfo",
+    "bbmap.sh",
+    "reformat.sh",
+    "python3",
+    "Rscript",
+]
+# NEW: R packages needed by the R rules (from the R conda env).
+REQUIRED_R_PKGS = ["data.table", "optparse", "igraph"]
+# NEW: versions pinned in the conda envs; PATH mode only warns on mismatch.
+PINNED_VERSIONS = {
+    "samtools": "1.23.1",
+    "bedtools": "2.31.1",
+}
+
 log = logging.getLogger("pang2p")
 sm_log = logging.getLogger("pang2p.snakemake")
 sm_log.propagate = False
@@ -89,7 +110,11 @@ def build_parser(d: dict) -> argparse.ArgumentParser:
 
     g.add_argument("--skip-checks", action="store_true",
                    help="skip preflight dependency checks (Snakemake still requires "
-                        "Apptainer and Conda when executing rules that use them)")
+                        "Conda when executing rules that use it)")
+    # NEW
+    g.add_argument("--no-conda", action="store_true",
+                   help="do not create/use conda environments; all required tools "
+                        "(see REQUIRED_BINS) and R packages must already be on PATH")
 
     g = p.add_argument_group("run control")
     g.add_argument("-n", "--dry-run", action="store_true", help="show what would run")
@@ -143,18 +168,58 @@ def snakemake_info():
     return exe, ver, h.stdout + h.stderr
 
 
-# Utility Function: Preflight Checks
-def preflight(have_snakemake: bool):
+# NEW: Utility Function: Check that required tools are on PATH (for --no-conda)
+def check_path_tools() -> list:
+    errors = []
+    missing = [b for b in REQUIRED_BINS if not shutil.which(b)]
+    if missing:
+        errors.append("--no-conda: not found on PATH: " + ", ".join(missing))
+
+    if shutil.which("Rscript"):
+        pkgs = ",".join(f'"{p}"' for p in REQUIRED_R_PKGS)
+        expr = (f"pkgs <- c({pkgs}); "
+                "m <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly=TRUE)]; "
+                "if (length(m)) { cat(m, sep=','); quit(status=1) }")
+        r = subprocess.run(["Rscript", "-e", expr], capture_output=True, text=True)
+        if r.returncode != 0:
+            errors.append("--no-conda: missing R packages: " + (r.stdout.strip() or r.stderr.strip()))
+    return errors
+
+
+# NEW: Utility Function: Log tool versions in PATH mode and warn on drift from conda pins
+def log_path_tool_versions():
+    for tool in ("samtools", "bedtools", "mmseqs"):
+        exe = shutil.which(tool)
+        if not exe:
+            continue
+        try:
+            r = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=30)
+            out = (r.stdout or r.stderr).strip()
+            first = out.splitlines()[0] if out else "unknown"
+        except (OSError, subprocess.TimeoutExpired):
+            first = "version check failed"
+        log.info("%s: %s (%s)", tool, first, exe)
+        pin = PINNED_VERSIONS.get(tool)
+        if pin and pin not in first:
+            log.warning("%s version differs from the conda-pinned %s; results may differ.", tool, pin)
+
+
+# CHANGED: Utility Function: Preflight Checks (mode-aware)
+def preflight(have_snakemake: bool, use_conda: bool):
     errors = []
 
     if not have_snakemake:
-        errors.append("snakemake not found on PATH (pip install 'snakemake>=8').")
+        errors.append("snakemake not found on PATH (pip install 'snakemake>=9').")
 
     # if not has_apptainer():
     #     errors.append("Apptainer/Singularity is required for container-based rules.")
 
-    if not has_conda():
-        errors.append("Conda, Mamba or Micromamba is required for conda-based rules.")
+    if use_conda:
+        if not has_conda():
+            errors.append("Conda, Mamba or Micromamba is required for conda-based rules "
+                          "(or use --no-conda with all tools on PATH).")
+    else:
+        errors += check_path_tools()
 
     return errors
 
@@ -235,17 +300,18 @@ def prepare_inputs(genomes: Path, samples: Path, outdir: Path):
     return g_path, s_path, errors, warnings
 
 
-# Pipeline Function: Build Snakemake Command
+# CHANGED: Pipeline Function: Build Snakemake Command (conda flags are conditional)
 def build_command(args, cfg_path: Path, outdir: Path, threads: int, sm_exe: str, sm_help: str):
     cmd = [sm_exe, "--snakefile", str(SNAKEFILE), "--directory", str(outdir),
            "--cores", str(threads), "--configfile", str(cfg_path),
            "--rerun-incomplete", "--printshellcmds"]
 
-    cmd += [
-        # "--software-deployment-method", "apptainer", "conda",
-        "--software-deployment-method", "conda",
-        "--conda-frontend", get_conda_frontend()
-    ]
+    if not args.no_conda:
+        cmd += [
+            # "--software-deployment-method", "apptainer", "conda",
+            "--software-deployment-method", "conda",
+            "--conda-frontend", get_conda_frontend(),
+        ]
 
     if args.unlock:
         cmd.append("--unlock")
@@ -343,8 +409,12 @@ def main(argv=None) -> int:
             return 2
     if sm_exe:
         log.info("snakemake %s (%s)", sm_ver, sm_exe)
+
+    use_conda = not args.no_conda
+    log.info("software mode: %s", "conda" if use_conda else "PATH (--no-conda)")
+
     if not args.skip_checks:
-        errors = preflight(bool(sm_exe))
+        errors = preflight(bool(sm_exe), use_conda)
         if errors:
             for e in errors:
                 log.error(e)
@@ -352,6 +422,9 @@ def main(argv=None) -> int:
     elif not sm_exe:
         log.error("snakemake not found on PATH")
         return 2
+
+    if not use_conda:
+        log_path_tool_versions()
 
     g_csv, s_csv, errors, warnings = prepare_inputs(genomes, samples, outdir)
     for w in warnings:

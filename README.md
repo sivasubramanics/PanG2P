@@ -118,7 +118,8 @@ Notes:
 pang2p -g genomes.csv -s samples.csv -t 32 -m 200g -o results
 ```
 
-If neither `--use-container` nor `--use-conda` is given, PanG2P uses Apptainer when it finds it, otherwise conda. Use `--skip-checks` to disable this and run rules with whatever is already on `PATH` (for example inside a Docker image that contains all tools).
+Use `--skip-checks` to disable this and run rules with whatever is already on `PATH` (for example inside a Docker image that contains all tools).
+Use `--no-conda` to use the system's PATH instead of conda environments.
 
 Dry run to validate the workflow without executing any jobs:
 
@@ -142,8 +143,8 @@ pang2p -g genomes.csv -s samples.csv -t 8 -m 16g --use-conda
 | `-o, --outdir` | Output directory [`pang2p_out`] |
 | `-t, --threads` | Threads per job |
 | `-m, --memory` | Memory for Java tools, e.g. `200g` |
-| `--use-conda` / `--use-container` | Software environment |
 | `--skip-checks` | Skip dependency checks and environment auto-selection |
+| `--no-conda` | Use the system's PATH instead of conda environments |
 | `-n, --dry-run` | Show what would run |
 | `--unlock` | Remove a stale lock after a crashed run, then exit |
 | `--force` | Rerun everything from scratch |
