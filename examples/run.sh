@@ -4,14 +4,11 @@
 # Date          : 2026-11-23
 # Version       : 0.1.0
 # Contact       : c.s.sivasubramani@gmail.com
-# Usage         : ./run.sh
-#
-# run.sh - download the PanG2P test data, build the input CSVs and run pang2p.
 #
 # Usage:
-#   ./run.sh                      # auto-selects apptainer or conda
-#   ./run.sh --use-conda          # extra arguments are passed straight to pang2p
-#   THREADS=8 MEM=16g ./run.sh
+#   ./run.sh                      # run pang2p with default settings
+#   ./run.sh --help               # show pang2p help
+#   THREADS=8 MEM=16g ./run.sh    # customize resources
 #   DRY_RUN=1 ./run.sh            # only show what would run
 
 
@@ -24,7 +21,7 @@ MEM="${MEM:-8g}"
 OUTDIR="${OUTDIR:-$WORKDIR/results}"
 
 command -v pang2p >/dev/null 2>&1 || {
-    echo "[run.sh] pang2p not found on PATH. Activate your environment or install pang2p before running this script." >&2
+    echo "[run.sh] pang2p not found on PATH. Please install pang2p and ensure it is available in your PATH." >&2
     exit 1
 }
 

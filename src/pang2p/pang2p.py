@@ -58,8 +58,8 @@ def load_config() -> dict:
 
 
 # Utility Function: Check for Apptainer/Singularity
-def has_apptainer() -> bool:
-    return bool(shutil.which("apptainer") or shutil.which("singularity"))
+# def has_apptainer() -> bool:
+#     return bool(shutil.which("apptainer") or shutil.which("singularity"))
 
 
 # Utility Function: Check for Conda/Mamba
@@ -150,8 +150,8 @@ def preflight(have_snakemake: bool):
     if not have_snakemake:
         errors.append("snakemake not found on PATH (pip install 'snakemake>=8').")
 
-    if not has_apptainer():
-        errors.append("Apptainer/Singularity is required for container-based rules.")
+    # if not has_apptainer():
+    #     errors.append("Apptainer/Singularity is required for container-based rules.")
 
     if not has_conda():
         errors.append("Conda, Mamba or Micromamba is required for conda-based rules.")
@@ -242,7 +242,8 @@ def build_command(args, cfg_path: Path, outdir: Path, threads: int, sm_exe: str,
            "--rerun-incomplete", "--printshellcmds"]
 
     cmd += [
-        "--software-deployment-method", "apptainer", "conda",
+        # "--software-deployment-method", "apptainer", "conda",
+        "--software-deployment-method", "conda",
         "--conda-frontend", get_conda_frontend()
     ]
 
